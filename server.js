@@ -91,7 +91,8 @@ app.get('/', isLogin, async (req, res) => {
         // ดึงประวัติงาน 10 รายการล่าสุดมาโชว์ที่ตาราง
         const jobs = await prisma.jobQueue.findMany({
             where: { account: { userId: req.session.userId } },
-            orderBy: { createdAt: 'desc' },
+            // ⭐ แก้จาก createdAt: 'desc' เปลี่ยนเป็น id: 'desc' 
+            orderBy: { id: 'desc' }, 
             take: 10,
             include: { account: true }
         });
@@ -103,7 +104,9 @@ app.get('/', isLogin, async (req, res) => {
             page: 'facebook' 
         });
     } catch (error) {
-        res.status(500).send("Error loading dashboard");
+        // ⭐ เปลี่ยนตรงนี้ เพื่อให้มันพ่น Error ของจริงออกมาโชว์บนหน้าเว็บ
+        console.error("DASHBOARD ERROR:", error);
+        res.status(500).send("Error loading dashboard สาเหตุ: " + error.message); 
     }
 });
 
@@ -178,22 +181,28 @@ app.get('/add-bot', isLogin, async (req, res) => {
     res.render('add_bot', { user, page: 'add-bot' });
 });
 
-// --- API สำหรับลบบัญชีเฟซบุ๊ก ---
+// --- API สำหรับลบบัญชีเฟซบุ๊ก (ฉบับแก้ไข ลบประวัติงานก่อนลบ) ---
 app.post('/api/accounts/delete', isLogin, async (req, res) => {
     const { accountId } = req.body;
     try {
-        await prisma.botAccount.delete({
+        // 1. ลบประวัติงาน (JobQueue) ที่ผูกกับบัญชีนี้ทิ้งก่อน (แก้ปัญหา DB Lock)
+        await prisma.jobQueue.deleteMany({
+            where: { accountId: parseInt(accountId) }
+        });
+
+        // 2. จากนั้นถึงจะลบบัญชีหลักได้อย่างปลอดภัย
+        await prisma.botAccount.deleteMany({
             where: { 
                 id: parseInt(accountId),
-                userId: req.session.userId // เช็กเพื่อความปลอดภัยว่าต้องเป็นเจ้าของบัญชี
+                userId: req.session.userId 
             }
         });
         res.json({ success: true });
     } catch (error) {
+        console.error("DELETE ERROR:", error);
         res.status(500).json({ success: false, error: "ไม่สามารถลบบัญชีได้" });
     }
 });
-
 // --- API สำหรับส่งคอมเมนต์เฟซบุ๊กทันที ---
 app.post('/api/facebook/send-now', isLogin, async (req, res) => {
     const { accountId, targetUrl, message } = req.body;
@@ -221,8 +230,115 @@ app.post('/api/facebook/send-now', isLogin, async (req, res) => {
 
         res.json({ success: true });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, error: "เกิดข้อผิดพลาดในการส่งทันที" });
+        console.error("SEND NOW ERROR:", error);
+        // ⭐ ส่ง Error Message ไปให้หน้าบ้านแสดงผล
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// --- หน้า LINE (แก้ชื่อตัวแปรให้ตรงกับ EJS) ---
+app.get('/line', isLogin, async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        // ดึงข้อมูลบัญชีบอท แล้วส่งไปในชื่อ lineAccounts (เพื่อให้ตรงกับที่ EJS ต้องการ)
+        const lineAccounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
+        
+        res.render('line_dashboard', { user, lineAccounts, page: 'line' }, (err, html) => {
+            if (err) res.status(500).send("⚠️ EJS Error (หน้า LINE): " + err.message);
+            else res.send(html);
+        });
+    } catch (error) {
+        res.status(500).send("⚠️ DB Error: " + error.message);
+    }
+});
+
+app.get('/packages', isLogin, async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        res.render('packages', { user, page: 'packages' }, (err, html) => {
+            if (err) res.status(500).send("⚠️ EJS Error (หน้า Packages): " + err.message);
+            else res.send(html);
+        });
+    } catch (error) {
+        res.status(500).send("⚠️ DB Error: " + error.message);
+    }
+});
+
+// --- หน้า History (เพิ่มการดึงข้อมูล Payments) ---
+app.get('/history', isLogin, async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        // 1. ดึงประวัติงานบอท
+        const jobs = await prisma.jobQueue.findMany({
+            where: { account: { userId: req.session.userId } },
+            orderBy: { id: 'desc' },
+            include: { account: true }
+        });
+        
+        // 2. ⭐ เพิ่มการดึงประวัติการเติมเงิน (payments) ของ User คนนี้
+        const payments = await prisma.payment.findMany({
+            where: { userId: req.session.userId },
+            orderBy: { id: 'desc' }
+        });
+        
+        // ส่งตัวแปรไปให้ครบทั้ง jobs และ payments
+        res.render('history', { user, jobs, payments, page: 'history' }, (err, html) => {
+            if (err) res.status(500).send("⚠️ EJS Error (หน้า History): " + err.message);
+            else res.send(html);
+        });
+    } catch (error) {
+        res.status(500).send("⚠️ DB Error: " + error.message);
+    }
+});
+
+app.get('/guide', isLogin, async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        res.render('guide', { user, page: 'guide' }, (err, html) => {
+            if (err) res.status(500).send("⚠️ EJS Error (หน้า Guide): " + err.message);
+            else res.send(html);
+        });
+    } catch (error) {
+        res.status(500).send("⚠️ DB Error: " + error.message);
+    }
+});
+
+// --- API สำหรับเพิ่มบัญชี Facebook (ฉบับแก้ไขตัด status ออก) ---
+app.post('/api/accounts/add', isLogin, async (req, res) => {
+    const { fbEmail, fbPassword, cookies } = req.body;
+    try {
+        await prisma.botAccount.create({
+            data: {
+                fbEmail,
+                fbPassword,
+                cookies,
+                userId: req.session.userId,
+                // ลบบรรทัด status: 'READY' ออก เพราะใน DB ไม่มีคอลัมน์นี้ครับ
+            }
+        });
+        res.redirect('/'); 
+    } catch (error) {
+        console.error("ADD ACCOUNT ERROR:", error);
+        res.status(500).send("ไม่สามารถเพิ่มบัญชีได้ สาเหตุ: " + error.message);
+    }
+});
+
+// --- API สำหรับเพิ่มงานจอง (ถ้าหายไปด้วยให้เติมอันนี้ครับ) ---
+app.post('/api/jobs/add', isLogin, async (req, res) => {
+    const { accountId, targetUrl, message, runAt } = req.body;
+    try {
+        await prisma.jobQueue.create({
+            data: {
+                accountId: parseInt(accountId),
+                targetUrl,
+                message,
+                runAt: runAt ? new Date(runAt) : new Date(),
+                status: 'PENDING'
+            }
+        });
+        res.redirect('/');
+    } catch (error) {
+        res.status(500).send("ไม่สามารถสั่งงานได้ สาเหตุ: " + error.message);
     }
 });
 
