@@ -384,6 +384,23 @@ app.post('/webhook', async (req, res) => {
     }
 });
 
+// --- API สำหรับลบบัญชี LINE ---
+app.delete('/api/line/delete/:id', isLogin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.lineAccount.delete({
+            where: { 
+                id: parseInt(id),
+                userId: req.session.userId // ป้องกันคนอื่นมาลบของเรา
+            }
+        });
+        res.sendStatus(200);
+    } catch (error) {
+        console.error("DELETE LINE ERROR:", error);
+        res.status(500).send(error.message);
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`✅ Server is running on http://localhost:${PORT}`);
 });

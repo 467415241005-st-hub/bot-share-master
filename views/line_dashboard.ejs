@@ -115,7 +115,9 @@
                                     <a href="<%= acc.groupUrl %>" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center bg-blue-50 px-2 py-1 rounded">
                                         <i class="fas fa-external-link-alt mr-1"></i> เปิดลิงก์
                                     </a>
-                                    <button class="text-xs text-red-500 hover:text-white hover:bg-red-500 font-medium border border-red-200 hover:border-red-500 px-3 py-1 rounded transition">ลบกลุ่ม</button>
+                                    <button onclick="deleteLineAccount('<%= acc.id %>')" class="text-xs text-red-500 hover:text-white hover:bg-red-500 font-medium border border-red-200 hover:border-red-500 px-3 py-1 rounded transition">
+                                        <i class="fas fa-trash-alt mr-1"></i> ลบกลุ่ม
+                                    </button>
                                 </div>
                             </div>
                         <% }) %>
@@ -125,6 +127,21 @@
 
         </div>
     </div>
-
+    <script>
+async function deleteLineAccount(id) {
+    if(!confirm('ยืนยันว่าจะลบกลุ่มนี้ออกจากระบบ?')) return;
+    
+    try {
+        const res = await fetch(`/api/line/delete/${id}`, { method: 'DELETE' });
+        if(res.ok) {
+            location.reload(); // ลบสำเร็จให้รีเฟรชหน้าจอ
+        } else {
+            alert('ลบไม่ได้: ' + (await res.text()));
+        }
+    } catch (err) {
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    }
+}
+</script>
 </body>
 </html>
