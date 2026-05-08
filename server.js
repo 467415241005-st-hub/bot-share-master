@@ -342,7 +342,15 @@ app.post('/api/jobs/add', isLogin, async (req, res) => {
     }
 });
 
-// ... (Route อื่นๆ ของคุณแทนคงไว้ตามเดิมได้เลยครับ) ...
+// --- API สำหรับรับ Webhook จาก LINE ---
+app.post('/webhook', async (req, res) => {
+    console.log("🟢 เชื่อมต่อ LINE Webhook สำเร็จ!");
+    
+    // (ในอนาคตเราจะเอาโค้ดบอทตอบกลับ LINE มาใส่ตรงนี้ครับ)
+
+    // บังคับส่งสถานะ 200 OK กลับไปหา LINE เพื่อบอกว่ารับทราบแล้ว
+    res.status(200).send("OK");
+});
 
 app.listen(PORT, () => {
     console.log(`✅ Server is running on http://localhost:${PORT}`);

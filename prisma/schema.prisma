@@ -52,7 +52,7 @@ model JobQueue {
   status     String   @default("PENDING") // PENDING, RUNNING, SUCCESS, FAILED
   runAt      DateTime @default(now())
   accountId  Int
-  account    BotAccount @relation(fields: [accountId], references: [id])
+  account   BotAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 // 5. ตารางประวัติการเติมเงิน/ส่งสลิป
