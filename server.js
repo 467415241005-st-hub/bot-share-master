@@ -344,12 +344,44 @@ app.post('/api/jobs/add', isLogin, async (req, res) => {
 
 // --- API สำหรับรับ Webhook จาก LINE ---
 app.post('/webhook', async (req, res) => {
-    console.log("🟢 เชื่อมต่อ LINE Webhook สำเร็จ!");
-    
-    // (ในอนาคตเราจะเอาโค้ดบอทตอบกลับ LINE มาใส่ตรงนี้ครับ)
-
-    // บังคับส่งสถานะ 200 OK กลับไปหา LINE เพื่อบอกว่ารับทราบแล้ว
+    // 1. ตอบกลับ LINE ทันทีว่ารับทราบแล้ว ป้องกัน Error โดนตัดการเชื่อมต่อ
     res.status(200).send("OK");
+
+    const events = req.body.events;
+    if (!events || events.length === 0) return;
+
+    // 2. วนลูปเช็คข้อความที่ส่งเข้ามา
+    for (const event of events) {
+        if (event.type === 'message' && event.message.type === 'text') {
+            const text = event.message.text.trim();
+            const replyToken = event.replyToken;
+
+            // 3. ถ้าผู้ใช้พิมพ์ /getid
+            if (text === '/getid') {
+                // ดึง ID (ถ้าพิมพ์ในกลุ่มจะได้ Group ID, ถ้าพิมพ์ส่วนตัวจะได้ User ID)
+                const targetId = event.source.groupId || event.source.userId;
+                const typeName = event.source.groupId ? "Group ID" : "User ID";
+                
+                const replyText = `[บอทแชร์] ${typeName} ของคุณคือ:\n${targetId}`;
+
+                // 4. สั่งบอทตอบกลับ
+                try {
+                    await axios.post('https://api.line.me/v2/bot/message/reply', {
+                        replyToken: replyToken,
+                        messages: [{ type: 'text', text: replyText }]
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // ⭐ สำคัญ: ต้องมี LINE_ACCESS_TOKEN ในไฟล์ .env ของเซิร์ฟเวอร์
+                            'Authorization': `Bearer ${process.env.LINE_ACCESS_TOKEN}` 
+                        }
+                    });
+                } catch (error) {
+                    console.error("LINE Reply Error:", error.response?.data || error.message);
+                }
+            }
+        }
+    }
 });
 
 app.listen(PORT, () => {
