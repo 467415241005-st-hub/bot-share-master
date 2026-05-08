@@ -236,17 +236,16 @@ app.post('/api/facebook/send-now', isLogin, async (req, res) => {
     }
 });
 
-// --- หน้า LINE (แก้ชื่อตัวแปรให้ตรงกับ EJS) ---
+// --- หน้า LINE (แก้ไขให้ดึงตาราง lineAccount) ---
 app.get('/line', isLogin, async (req, res) => {
     try {
         const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
-        // ดึงข้อมูลบัญชีบอท แล้วส่งไปในชื่อ lineAccounts (เพื่อให้ตรงกับที่ EJS ต้องการ)
-        const lineAccounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
-        
-        res.render('line_dashboard', { user, lineAccounts, page: 'line' }, (err, html) => {
-            if (err) res.status(500).send("⚠️ EJS Error (หน้า LINE): " + err.message);
-            else res.send(html);
+        // ⭐ เปลี่ยนจาก botAccount เป็น lineAccount
+        const lineAccounts = await prisma.lineAccount.findMany({ 
+            where: { userId: req.session.userId } 
         });
+        
+        res.render('line_dashboard', { user, lineAccounts, page: 'line' });
     } catch (error) {
         res.status(500).send("⚠️ DB Error: " + error.message);
     }
@@ -390,14 +389,31 @@ app.delete('/api/line/delete/:id', isLogin, async (req, res) => {
         const { id } = req.params;
         await prisma.lineAccount.delete({
             where: { 
-                id: parseInt(id),
-                userId: req.session.userId // ป้องกันคนอื่นมาลบของเรา
+                id: parseInt(id) // มั่นใจว่าเป็นตาราง lineAccount แน่นอน
             }
         });
         res.sendStatus(200);
     } catch (error) {
         console.error("DELETE LINE ERROR:", error);
         res.status(500).send(error.message);
+    }
+});
+
+// --- API สำหรับเพิ่มบัญชี LINE ---
+app.post('/api/line/add', isLogin, async (req, res) => {
+    const { groupName, groupId, groupUrl } = req.body;
+    try {
+        await prisma.lineAccount.create({
+            data: {
+                groupName,
+                groupId,
+                groupUrl,
+                userId: req.session.userId
+            }
+        });
+        res.redirect('/line'); 
+    } catch (error) {
+        res.status(500).send("ไม่สามารถเพิ่มกลุ่มไลน์ได้: " + error.message);
     }
 });
 
