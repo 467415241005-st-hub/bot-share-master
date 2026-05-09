@@ -26,12 +26,19 @@
                 </div>
             </div>
 
-            <div class="flex items-center space-x-3 md:space-x-4">
-                <div class="text-right mr-1 md:mr-2">
-                    <p class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest">เครดิต</p>
-                    <a href="/topup" class="text-[10px] bg-indigo-600 hover:bg-indigo-500 px-2 py-0.5 rounded text-white font-bold ml-1 transition">เติมเงิน</a>
-                    <p class="text-xs md:text-sm font-bold text-indigo-300">฿<%= typeof user !== 'undefined' && user?.credits ? user.credits.toLocaleString() : '0' %></p>
-                </div>
+            <div class="flex items-center bg-slate-800/40 rounded-2xl p-1.5 pr-2 border border-slate-700/50 transition-all hover:border-slate-600">
+    <div class="text-right mr-3 pl-3">
+        <p class="text-[8px] md:text-[9px] text-slate-400 uppercase tracking-widest leading-none mb-1">ยอดเงินคงเหลือ</p>
+        <p class="text-xs md:text-sm font-extrabold text-indigo-300 leading-none">
+            ฿<%= typeof user !== 'undefined' && user?.credits ? user.credits.toLocaleString() : '0' %>
+        </p>
+    </div>
+    
+    <a href="/topup" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 group">
+        <i class="fas fa-plus-circle text-[10px] transition-transform group-hover:rotate-90"></i>
+        <span>เติมเครดิต</span>
+    </a>
+</div>
                 
                 <a href="/logout" class="hidden sm:block bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs font-bold transition border border-red-500/20">ออกจากระบบ</a>
                 
