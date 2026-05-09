@@ -417,6 +417,36 @@ app.post('/api/line/add', isLogin, async (req, res) => {
     }
 });
 
+// --- API สำหรับส่งข้อความ LINE ทันที (Send Now) ---
+app.post('/api/jobs/send-now', isLogin, async (req, res) => {
+    const { accountId, message } = req.body;
+    try {
+        // 1. ดึงข้อมูลกลุ่มไลน์จากฐานข้อมูล
+        const acc = await prisma.lineAccount.findUnique({
+            where: { id: parseInt(accountId) }
+        });
+
+        if (!acc) return res.status(404).send("ไม่พบข้อมูลกลุ่มไลน์");
+
+        // 2. ส่งข้อความเข้า LINE (ใช้ Push Message API)
+        const response = await axios.post('https://api.line.me/v2/bot/message/push', {
+            to: acc.groupId, // ส่งหา Group ID หรือ User ID ที่บันทึกไว้
+            messages: [{ type: 'text', text: message }]
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+            }
+        });
+
+        console.log("🟢 ส่งไลน์ด่วนสำเร็จ!");
+        res.redirect('/line?success=true'); // ส่งเสร็จให้เด้งกลับหน้าเดิม
+    } catch (error) {
+        console.error("LINE SEND NOW ERROR:", error.response?.data || error.message);
+        res.status(500).send("ส่งไม่สำเร็จ: " + (error.response?.data?.message || error.message));
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`✅ Server is running on http://localhost:${PORT}`);
 });
