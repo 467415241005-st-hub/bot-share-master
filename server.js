@@ -263,6 +263,44 @@ app.get('/packages', isLogin, async (req, res) => {
     }
 });
 
+// --- หน้าเติมเครดิต ---
+app.get('/topup', isLogin, async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        res.render('topup', { user, page: 'topup' });
+    } catch (error) {
+        res.status(500).send("⚠️ เกิดข้อผิดพลาด: " + error.message);
+    }
+});
+
+// --- API สำหรับส่งสลิปเติมเงิน ---
+app.post('/api/payments/upload', isLogin, upload.single('slip'), async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const slipPath = req.file ? `/uploads/slips/${req.file.filename}` : null;
+
+        if (!slipPath) return res.status(400).send("กรุณาแนบรูปสลิป");
+
+        await prisma.payment.create({
+            data: {
+                amount: parseFloat(amount),
+                slipImage: slipPath,
+                status: 'PENDING',
+                userId: req.session.userId
+            }
+        });
+
+        res.send(`
+            <script>
+                alert('ส่งสลิปสำเร็จ! รอแอดมินตรวจสอบ');
+                window.location.href = '/history';
+            </script>
+        `);
+    } catch (error) {
+        res.status(500).send("ไม่สามารถส่งสลิปได้: " + error.message);
+    }
+});
+
 // --- หน้า History (เพิ่มการดึงข้อมูล Payments) ---
 app.get('/history', isLogin, async (req, res) => {
     try {
