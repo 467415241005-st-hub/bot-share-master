@@ -360,25 +360,39 @@ app.post('/api/accounts/add', isLogin, async (req, res) => {
     }
 });
 
-// --- API สำหรับเพิ่มงานจอง (อัปเดตรองรับระบบหลังเรท) ---
-app.post('/api/jobs/add', isLogin, async (req, res) => {
-    const { accountId, targetUrl, message, runAt, mode, keyword, repeat } = req.body; // ✨ รับค่าเพิ่ม
+// --- API สำหรับส่งข้อความ LINE ทันที (Send Now) ---
+app.post('/api/jobs/send-now', isLogin, async (req, res) => {
+    const { accountId, message, repeat } = req.body; // ✨ รับค่า repeat มาด้วย
     try {
-        await prisma.jobQueue.create({
-            data: {
-                accountId: parseInt(accountId),
-                targetUrl,
-                message,
-                runAt: runAt ? new Date(runAt) : new Date(),
-                status: 'PENDING',
-                mode: mode || 'SCHEDULE',           // ✨ บันทึกโหมด
-                keyword: keyword || null,           // ✨ บันทึกคีย์เวิร์ด
-                repeat: parseInt(repeat) || 1       // ✨ บันทึกจำนวนครั้ง
-            }
+        const acc = await prisma.lineAccount.findUnique({
+            where: { id: parseInt(accountId) }
         });
-        res.redirect('/');
+
+        if (!acc) return res.status(404).send("ไม่พบข้อมูลกลุ่มไลน์");
+
+        const repeatCount = parseInt(repeat) || 1; // ✨ แปลงเป็นตัวเลข
+
+        // ✨ สั่งให้บอทวนลูปส่งข้อความตามจำนวนที่เลือก
+        for (let i = 0; i < repeatCount; i++) {
+            await axios.post('https://api.line.me/v2/bot/message/push', {
+                to: acc.groupId,
+                messages: [{ type: 'text', text: message }]
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.LINE_ACCESS_TOKEN}`
+                }
+            });
+            
+            // หน่วงเวลา 1.5 วินาที ระหว่างข้อความ ป้องกันระบบ LINE บล็อก
+            if (i < repeatCount - 1) await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+
+        console.log(`🟢 ส่งไลน์ด่วนสำเร็จ ${repeatCount} ข้อความ!`);
+        res.redirect('/line?success=true');
     } catch (error) {
-        res.status(500).send("ไม่สามารถสั่งงานได้ สาเหตุ: " + error.message);
+        console.error("LINE SEND NOW ERROR:", error.response?.data || error.message);
+        res.status(500).send("ส่งไม่สำเร็จ: " + (error.response?.data?.message || error.message));
     }
 });
 
