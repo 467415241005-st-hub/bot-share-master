@@ -51,6 +51,9 @@ model JobQueue {
   message    String
   status     String   @default("PENDING") // PENDING, RUNNING, SUCCESS, FAILED
   runAt      DateTime @default(now())
+  mode       String   @default("SCHEDULE") // โหมด: SCHEDULE (ตั้งเวลา) หรือ KEYWORD (หลังเรท)
+  keyword    String?  // คำที่ใช้ดักจับ (เช่น "ตั้งค่า:", "วางเรท")
+  repeat     Int      @default(1) // จำนวนคอมเมนต์/ข้อความ (1-5)
   accountId  Int
   account   BotAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }

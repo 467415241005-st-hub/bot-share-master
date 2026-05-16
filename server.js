@@ -360,9 +360,9 @@ app.post('/api/accounts/add', isLogin, async (req, res) => {
     }
 });
 
-// --- API สำหรับเพิ่มงานจอง (ถ้าหายไปด้วยให้เติมอันนี้ครับ) ---
+// --- API สำหรับเพิ่มงานจอง (อัปเดตรองรับระบบหลังเรท) ---
 app.post('/api/jobs/add', isLogin, async (req, res) => {
-    const { accountId, targetUrl, message, runAt } = req.body;
+    const { accountId, targetUrl, message, runAt, mode, keyword, repeat } = req.body; // ✨ รับค่าเพิ่ม
     try {
         await prisma.jobQueue.create({
             data: {
@@ -370,7 +370,10 @@ app.post('/api/jobs/add', isLogin, async (req, res) => {
                 targetUrl,
                 message,
                 runAt: runAt ? new Date(runAt) : new Date(),
-                status: 'PENDING'
+                status: 'PENDING',
+                mode: mode || 'SCHEDULE',           // ✨ บันทึกโหมด
+                keyword: keyword || null,           // ✨ บันทึกคีย์เวิร์ด
+                repeat: parseInt(repeat) || 1       // ✨ บันทึกจำนวนครั้ง
             }
         });
         res.redirect('/');
