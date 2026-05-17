@@ -306,6 +306,7 @@ async function sendNow() {
     const accountId = document.querySelector('select[name="accountId"]').value;
     const targetUrl = document.querySelector('input[name="targetUrl"]').value;
     const message = document.querySelector('input[name="message"]').value; 
+    const repeat = document.querySelector('select[name="repeat"]').value; 
 
     if(!targetUrl || !message) return showError('กรุณากรอกลิงก์และข้อความให้ครบ');
 
@@ -318,7 +319,7 @@ async function sendNow() {
         const res = await fetch('/api/facebook/send-now', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accountId, targetUrl, message })
+            body: JSON.stringify({ accountId, targetUrl, message, repeat }) // ✨ เพิ่ม repeat ตรงนี้
         });
         
         if(res.ok) {
