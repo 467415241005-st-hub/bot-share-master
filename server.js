@@ -105,23 +105,31 @@ app.delete('/api/line/delete/:id', isLogin, async (req, res) => {
 app.post('/api/jobs/add', isLogin, async (req, res) => {
     const { accountId, message, runAt, repeat, mode, keyword, targetUrl } = req.body;
     try {
-        // ดึง Group ID ของ LINE มาใช้เป็นเป้าหมาย
         let finalTargetUrl = targetUrl;
+        let platform = 'FACEBOOK';
+        let parsedAccountId = parseInt(accountId);
+
+        // ถ้าไม่มี targetUrl ส่งมา แปลว่าสั่งงานมาจากหน้า LINE
         if (!targetUrl && accountId) {
             const lineAcc = await prisma.lineAccount.findUnique({ where: { id: parseInt(accountId) } });
-            if (lineAcc) finalTargetUrl = lineAcc.groupId;
+            if (lineAcc) {
+                finalTargetUrl = lineAcc.groupId;
+                platform = 'LINE';
+                parsedAccountId = null; // ✨ ไม่ต้องผูกกับบัญชีเฟสบุ๊ก
+            }
         }
 
         await prisma.jobQueue.create({
             data: {
-                accountId: parseInt(accountId),
+                accountId: parsedAccountId,
                 targetUrl: finalTargetUrl || "",
                 message: message,
                 runAt: runAt ? new Date(runAt) : new Date(),
                 repeat: parseInt(repeat) || 1,
                 mode: mode || 'SCHEDULE',
                 keyword: keyword || null,
-                status: 'PENDING'
+                status: 'PENDING',
+                platform: platform // ✨ บันทึกลงไปว่าเป็นงานของแพลตฟอร์มไหน
             }
         });
         res.redirect('back');
@@ -136,7 +144,11 @@ app.post('/api/jobs/add', isLogin, async (req, res) => {
 app.get('/api/cron/worker', async (req, res) => {
     const now = new Date();
     const pendingJobs = await prisma.jobQueue.findMany({
-        where: { status: "PENDING", runAt: { lte: now } },
+        where: { 
+            status: "PENDING", 
+            runAt: { lte: now },
+            platform: "FACEBOOK" // ✨ สั่งให้บอทเฟส รันเฉพาะงานของเฟสบุ๊กเท่านั้น
+        },
         include: { account: true }
     });
 
