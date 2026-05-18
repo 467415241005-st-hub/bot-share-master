@@ -265,13 +265,32 @@ app.get('/', isLogin, async (req, res) => {
     res.render('index', { accounts, jobs, page: 'facebook' });
 });
 
+// ✨ อัปเดตหน้า LINE ให้ดึงข้อมูลงานล่าสุดมาด้วย
 app.get('/line', isLogin, async (req, res) => {
     const lineAccounts = await prisma.lineAccount.findMany({ where: { userId: req.session.userId } });
-    res.render('line_dashboard', { lineAccounts, page: 'line' });
+    const groupIds = lineAccounts.map(acc => acc.groupId);
+    const jobs = await prisma.jobQueue.findMany({ 
+        where: { targetUrl: { in: groupIds }, platform: 'LINE' }, 
+        orderBy: { id: 'desc' }, 
+        take: 10 
+    });
+    res.render('line_dashboard', { lineAccounts, jobs, page: 'line' });
 });
 
 app.get('/add-bot', isLogin, (req, res) => res.render('add_bot', { page: 'add-bot' }));
+
+// ✨ เปิดเส้นทางใหม่ทั้ง 4 หน้า ให้เข้าใช้งานได้
+app.get('/packages', isLogin, (req, res) => res.render('packages', { page: 'packages' }));
+app.get('/guide', isLogin, (req, res) => res.render('guide', { page: 'guide' }));
+app.get('/topup', isLogin, (req, res) => res.render('topup', { page: 'topup' }));
+app.get('/history', isLogin, async (req, res) => {
+    const payments = await prisma.payment.findMany({ 
+        where: { userId: req.session.userId }, 
+        orderBy: { id: 'desc' } 
+    });
+    res.render('history', { payments, page: 'history' });
+});
+
 app.get('/login', (req, res) => res.render('login'));
-app.get('/home', isLogin, (req, res) => res.render('home', { page: 'home' }));
 
 app.listen(PORT, () => console.log(`✅ Server is running on port ${PORT}`));
