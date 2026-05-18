@@ -129,10 +129,17 @@ app.post('/api/jobs/add', isLogin, async (req, res) => {
                 mode: mode || 'SCHEDULE',
                 keyword: keyword || null,
                 status: 'PENDING',
-                platform: platform // ✨ บันทึกลงไปว่าเป็นงานของแพลตฟอร์มไหน
+                platform: platform 
             }
         });
-        res.redirect('back');
+
+        // ✨ ระบุหน้าเว็บให้ชัดเจน ป้องกันเบราว์เซอร์หลงทาง
+        if (platform === 'LINE') {
+            res.redirect('/line');
+        } else {
+            res.redirect('/');
+        }
+
     } catch (error) {
         res.status(500).send("Error adding job: " + error.message);
     }
