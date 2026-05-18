@@ -17,7 +17,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 const PORT = process.env.PORT || 3000;
 
+// ==========================================
 // 1. CONFIG & MIDDLEWARE
+// ==========================================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
@@ -44,7 +46,93 @@ app.use((req, res, next) => {
 
 const isLogin = (req, res, next) => { if (req.session.userId) return next(); res.redirect('/login'); };
 
-// 2. CRON WORKER (สำหรับรันงานตั้งเวลาและหลังเรท FB)
+// ==========================================
+// ⭐ 2. AUTHENTICATION (เข้าสู่ระบบ / ออกจากระบบ)
+// ==========================================
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = await prisma.user.findFirst({ where: { username } });
+        if (user && await bcrypt.compare(password, user.password)) {
+            req.session.userId = user.id;
+            req.session.user = user;
+            res.redirect('/line');
+        } else {
+            res.send("<script>alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!'); window.history.back();</script>");
+        }
+    } catch (error) {
+        res.status(500).send("Login Error: " + error.message);
+    }
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/login');
+});
+
+// ==========================================
+// ⭐ 3. ACCOUNT MANAGEMENT (จัดการกลุ่ม LINE)
+// ==========================================
+app.post('/api/line/add', isLogin, async (req, res) => {
+    const { groupName, groupId, groupUrl } = req.body;
+    try {
+        await prisma.lineAccount.create({
+            data: { 
+                userId: req.session.userId, 
+                groupName, 
+                groupId, 
+                groupUrl: groupUrl || "" 
+            }
+        });
+        res.redirect('/line');
+    } catch (error) {
+        res.status(500).send("Error adding LINE: " + error.message);
+    }
+});
+
+app.delete('/api/line/delete/:id', isLogin, async (req, res) => {
+    try {
+        await prisma.lineAccount.delete({ where: { id: parseInt(req.params.id) } });
+        res.send("OK");
+    } catch (error) {
+        res.status(500).send("Error deleting LINE");
+    }
+});
+
+// ==========================================
+// ⭐ 4. JOB MANAGEMENT (บันทึกงาน FB & LINE)
+// ==========================================
+app.post('/api/jobs/add', isLogin, async (req, res) => {
+    const { accountId, message, runAt, repeat, mode, keyword, targetUrl } = req.body;
+    try {
+        // ดึง Group ID ของ LINE มาใช้เป็นเป้าหมาย
+        let finalTargetUrl = targetUrl;
+        if (!targetUrl && accountId) {
+            const lineAcc = await prisma.lineAccount.findUnique({ where: { id: parseInt(accountId) } });
+            if (lineAcc) finalTargetUrl = lineAcc.groupId;
+        }
+
+        await prisma.jobQueue.create({
+            data: {
+                accountId: parseInt(accountId),
+                targetUrl: finalTargetUrl || "",
+                message: message,
+                runAt: runAt ? new Date(runAt) : new Date(),
+                repeat: parseInt(repeat) || 1,
+                mode: mode || 'SCHEDULE',
+                keyword: keyword || null,
+                status: 'PENDING'
+            }
+        });
+        res.redirect('back');
+    } catch (error) {
+        res.status(500).send("Error adding job: " + error.message);
+    }
+});
+
+// ==========================================
+// ⭐ 5. CRON & EXECUTION (ระบบรันอัตโนมัติ / ส่งด่วน)
+// ==========================================
 app.get('/api/cron/worker', async (req, res) => {
     const now = new Date();
     const pendingJobs = await prisma.jobQueue.findMany({
@@ -65,7 +153,6 @@ app.get('/api/cron/worker', async (req, res) => {
     res.json({ processed: pendingJobs.length });
 });
 
-// 3. FACEBOOK API
 app.post('/api/facebook/send-now', isLogin, async (req, res) => {
     const { accountId, targetUrl, message, repeat } = req.body;
     try {
@@ -88,7 +175,29 @@ app.post('/api/facebook/send-now', isLogin, async (req, res) => {
     }
 });
 
-// 4. LINE API (Webhook ดักคีย์เวิร์ดหลังเรท)
+app.post('/api/jobs/send-now', isLogin, async (req, res) => {
+    const { accountId, message, repeat } = req.body;
+    try {
+        const acc = await prisma.lineAccount.findUnique({ where: { id: parseInt(accountId) } });
+        if (!acc) return res.status(404).send("ไม่พบกลุ่มไลน์");
+        
+        const repeatCount = parseInt(repeat) || 1;
+        for (let i = 0; i < repeatCount; i++) {
+            await axios.post('https://api.line.me/v2/bot/message/push', {
+                to: acc.groupId, messages: [{ type: 'text', text: message }]
+            }, { headers: { 'Authorization': `Bearer ${process.env.LINE_ACCESS_TOKEN}` } });
+            
+            if (i < repeatCount - 1) await new Promise(r => setTimeout(r, 1500));
+        }
+        res.redirect('/line?success=true');
+    } catch (error) {
+        res.status(500).send("ส่งไม่สำเร็จ: " + error.message);
+    }
+});
+
+// ==========================================
+// ⭐ 6. LINE WEBHOOK (จับคีย์เวิร์ดหลังเรท)
+// ==========================================
 app.post('/webhook', async (req, res) => {
     res.status(200).send("OK");
     const events = req.body.events;
@@ -106,7 +215,6 @@ app.post('/webhook', async (req, res) => {
                     messages: [{ type: 'text', text: `ID ของกลุ่มนี้คือ:\n${targetId}` }]
                 }, { headers: { 'Authorization': `Bearer ${process.env.LINE_ACCESS_TOKEN}` } });
             } 
-            // ⭐ ระบบจองหลังเรท LINE
             else if (groupId) {
                 const jobs = await prisma.jobQueue.findMany({
                     where: { status: 'PENDING', mode: 'KEYWORD', targetUrl: groupId }
@@ -129,35 +237,21 @@ app.post('/webhook', async (req, res) => {
     }
 });
 
-// 5. LINE API (ส่งทันทีแบบวนลูป)
-app.post('/api/jobs/send-now', isLogin, async (req, res) => {
-    const { accountId, message, repeat } = req.body;
-    try {
-        const acc = await prisma.lineAccount.findUnique({ where: { id: parseInt(accountId) } });
-        if (!acc) return res.status(404).send("ไม่พบกลุ่มไลน์");
-        const repeatCount = parseInt(repeat) || 1;
-        for (let i = 0; i < repeatCount; i++) {
-            await axios.post('https://api.line.me/v2/bot/message/push', {
-                to: acc.groupId, messages: [{ type: 'text', text: message }]
-            }, { headers: { 'Authorization': `Bearer ${process.env.LINE_ACCESS_TOKEN}` } });
-            if (i < repeatCount - 1) await new Promise(r => setTimeout(r, 1500));
-        }
-        res.redirect('/line?success=true');
-    } catch (error) {
-        res.status(500).send("ส่งไม่สำเร็จ: " + error.message);
-    }
-});
-
-// --- ROUTES อื่นๆ ---
+// ==========================================
+// ⭐ 7. VIEWS / PAGES (หน้าเว็บทั้งหมด)
+// ==========================================
 app.get('/', isLogin, async (req, res) => {
     const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
     const jobs = await prisma.jobQueue.findMany({ where: { account: { userId: req.session.userId } }, orderBy: { id: 'desc' }, take: 10, include: { account: true } });
     res.render('index', { accounts, jobs, page: 'facebook' });
 });
+
 app.get('/line', isLogin, async (req, res) => {
     const lineAccounts = await prisma.lineAccount.findMany({ where: { userId: req.session.userId } });
     res.render('line_dashboard', { lineAccounts, page: 'line' });
 });
+
+app.get('/add-bot', isLogin, (req, res) => res.render('add_bot', { page: 'add-bot' }));
 app.get('/login', (req, res) => res.render('login'));
 app.get('/home', isLogin, (req, res) => res.render('home', { page: 'home' }));
 
