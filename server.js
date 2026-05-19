@@ -242,17 +242,17 @@ app.get('/history', isLogin, async (req, res) => {
 });
 
 app.get('/', isLogin, async (req, res) => {
-    // 1. ดึงข้อมูลบอทเฟสบุ๊ก
+    // 1. ดึงข้อมูลบัญชีบอท
     const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
     
-    // 2. ดึงข้อมูลประวัติการทำงาน (Jobs) เพิ่มบรรทัดนี้ครับ
+    // 2. [สำคัญ] เพิ่มบรรทัดดึงข้อมูล jobs นี้เข้าไปครับ
     const jobs = await prisma.jobQueue.findMany({ 
         where: { userId: req.session.userId }, 
         orderBy: { id: 'desc' },
-        take: 10 // ดึงมาแค่ 10 รายการล่าสุด
+        take: 10 
     });
 
-    // 3. ส่งตัวแปร jobs ไปด้วย
+    // 3. ส่ง jobs เข้าไปใน render
     res.render('index', { accounts, jobs, page: 'home', user: req.session.user });
 });
 
