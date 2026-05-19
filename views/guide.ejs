@@ -21,7 +21,7 @@
             <div class="lg:col-span-1">
                 <div class="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-0 lg:space-y-2 lg:sticky lg:top-24 pb-2 lg:pb-0 whitespace-nowrap lg:whitespace-normal">
                     <a href="#facebook" class="inline-block lg:block p-3 rounded-xl bg-blue-50 text-blue-700 font-bold border border-blue-100">ระบบ Facebook</a>
-                    <a href="#line" class="inline-block lg:block p-3 rounded-xl hover:bg-slate-100 text-slate-600 transition">ระบบ LINE OA</a>
+                    <a href="#line" class="inline-block lg:block p-3 rounded-xl hover:bg-slate-100 text-slate-600 transition">ระบบ LINE ส่วนตัว</a>
                     <a href="#advanced" class="inline-block lg:block p-3 rounded-xl hover:bg-slate-100 text-slate-600 transition">การหา Cookies/ID</a>
                 </div>
             </div>
@@ -66,25 +66,31 @@
 
                 <section id="line" class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-100">
                     <h2 class="text-xl md:text-2xl font-bold mb-6 flex items-center text-green-600">
-                        <i class="fab fa-line mr-3"></i> การใช้งานบอท LINE OA
+                        <i class="fab fa-line mr-3"></i> การใช้งานบอท LINE (ส่วนตัว)
                     </h2>
                     
                     <div class="space-y-6">
                         <div class="border-l-4 border-green-200 pl-4">
-                            <h3 class="font-bold text-base md:text-lg mb-2">1. วิธีหาลิงก์กลุ่มไลน์</h3>
-                            <p class="text-slate-500 text-sm mb-3">เข้าไปที่กลุ่มไลน์ > กดเมนู (3 ขีด) > เลือก "เชิญ" (Invite) > เลือก "ลิงก์" (Link) หรือ "คิวอาร์โค้ด" เพื่อคัดลอก URL</p>
+                            <h3 class="font-bold text-base md:text-lg mb-2">1. วิธีการหาค่า Cookies บัญชี LINE</h3>
+                            <p class="text-slate-500 text-sm mb-4">การหาค่าคุกกี้ของ LINE จะทำเหมือนกับระบบ Facebook เลยครับ:</p>
+                            <div class="bg-green-50 p-4 rounded-xl text-sm border border-green-100">
+                                <p class="font-bold text-slate-700 mb-1"><i class="fas fa-desktop mr-1"></i> บนคอมพิวเตอร์ (แนะนำ)</p>
+                                <ol class="list-decimal list-inside text-slate-600 space-y-2 ml-1 mt-2">
+                                    <li>ล็อกอินเข้าสู่ระบบ <b>LINE ผ่านเว็บเบราว์เซอร์</b> (หรือเว็บส่วนขยายของ LINE)</li>
+                                    <li>กดที่ไอคอน Extension <b>Cookie-Editor</b> (รูปคุกกี้) ที่มุมขวาบนของจอ</li>
+                                    <li>กดปุ่ม <b>Export</b> (ระบบจะคัดลอกโค้ดให้อัตโนมัติ)</li>
+                                    <li>นำโค้ดที่ได้ไปวางในช่อง <b>"Cookies บัญชี LINE"</b> ในหน้าจัดการบอท</li>
+                                </ol>
+                            </div>
                         </div>
 
                         <div class="border-l-4 border-green-200 pl-4">
-                            <h3 class="font-bold text-base md:text-lg mb-2">2. วิธีหา LINE Group ID (สำคัญ)</h3>
-                            <p class="text-slate-500 text-sm mb-4">เนื่องจาก LINE ไม่แสดง Group ID ปกติ ท่านต้องใช้บอทของระบบเป็นตัวช่วย:</p>
-                            <div class="bg-green-50 p-4 md:p-5 rounded-2xl border border-green-100">
-                                <ol class="list-decimal list-inside text-sm text-green-800 space-y-2">
-                                    <li>เชิญบอท **WELLOFF Assistant** เข้าไปในกลุ่มของท่าน</li>
-                                    <li>พิมพ์ข้อความในกลุ่มว่า <code class="bg-white px-2 py-1 rounded font-bold">/getid</code></li>
-                                    <li>บอทจะตอบกลับเป็นรหัสที่ขึ้นต้นด้วย <code class="bg-white px-2 py-1 rounded font-bold">C...</code></li>
-                                    <li>นำรหัสนั้นมาใส่ในช่อง Group ID ในหน้าจัดการบอทไลน์</li>
-                                </ol>
+                            <h3 class="font-bold text-base md:text-lg mb-2">2. การระบุ "ชื่อกลุ่มเป้าหมาย" (สำคัญ)</h3>
+                            <p class="text-slate-500 text-sm mb-4">เนื่องจากเป็นบอทส่วนตัว บอทจะใช้วิธีพิมพ์ค้นหาชื่อกลุ่มแชร์เพื่อเข้าไปส่งข้อความ</p>
+                            <div class="bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-100">
+                                <p class="text-sm text-slate-600 leading-relaxed">
+                                    ในหน้าสั่งงานบอท ช่อง <b class="text-red-500">"ชื่อกลุ่มเป้าหมาย"</b> ท่านจะต้องพิมพ์ชื่อกลุ่มแชร์ให้ <b class="text-slate-800">ตรงกับในแอป LINE เป๊ะๆ ทุกตัวอักษร</b> (รวมถึงการเว้นวรรค สัญลักษณ์ และอีโมจิ ถ้ามี) เพื่อให้บอทค้นหากลุ่มเจอและจองแชร์ได้ถูกต้องครับ
+                                </p>
                             </div>
                         </div>
                     </div>

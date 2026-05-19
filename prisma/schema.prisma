@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,72 +9,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. ตาราง User (เก็บข้อมูลลูกค้า/แอดมิน)
 model User {
   id         String   @id @default(uuid())
   username   String   @unique
   email      String   @unique
   password   String
   credits    Float    @default(0)
-  role       String   @default("USER") // USER หรือ ADMIN
+  lineLimit  Int      @default(1) // โควต้าจำนวนกลุ่ม/บัญชี LINE
   createdAt  DateTime @default(now())
-
-  accounts   BotAccount[]
   lineAccs   LineAccount[]
-  payments   Payment[]
+  accounts   BotAccount[]
 }
 
-// 2. ตารางบัญชี Facebook
-model BotAccount {
-  id         Int      @id @default(autoincrement())
-  fbEmail    String   @unique
-  fbPassword String
-  cookies    String
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  jobs       JobQueue[]
-}
-
-// 3. ตารางบัญชี LINE (ใช้ส่งเข้ากลุ่มผ่าน OA)
 model LineAccount {
-  id         Int     @id @default(autoincrement())
-  groupName  String  // ✨ เพิ่มฟิลด์ชื่อกลุ่ม (จากช่องแรกใน UI)
-  groupId    String  @unique // ✨ เพิ่มฟิลด์เก็บรหัส C... (จากช่องสองใน UI)
-  groupUrl   String? // ลิงก์กลุ่มไลน์ (ตัวที่คุณแก้เป็น Optional แล้ว)
-  token      String? // Messaging API Token (ถ้ามีแยกรายบัญชี)
-  userId     String
-  user       User    @relation(fields: [userId], references: [id])
+  id           Int      @id @default(autoincrement())
+  groupName    String   // ชื่อบัญชีเอาไว้อ้างอิง
+  loginType    String   @default("COOKIE") 
+  lineEmail    String?  
+  linePassword String? 
+  cookies      String?  @db.Text // ✨ เก็บ Cookie บัญชีส่วนตัว
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  jobs         JobQueue[]
 }
 
-// 4. ตารางคิวงานจองแชร์
 model JobQueue {
-  id         Int      @id @default(autoincrement())
-  targetUrl  String
-  message    String
-  status     String   @default("PENDING") 
-  runAt      DateTime @default(now())
-  mode       String   @default("SCHEDULE") 
-  keyword    String?  
-  repeat     Int      @default(1) 
-  platform   String   @default("FACEBOOK") // ✨ เพิ่มฟิลด์แยกประเภทงาน (FACEBOOK / LINE)
-  accountId  Int?     // ✨ ใส่ ? เพื่อให้เป็นค่าว่างได้ (สำหรับงาน LINE)
-  account    BotAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade) // ✨ ใส่ ?
-}
-
-// 5. ตารางประวัติการเติมเงิน/ส่งสลิป
-model Payment {
-  id        Int      @id @default(autoincrement())
-  amount    Float
-  slipUrl   String   // พาธไฟล์รูปสลิป
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-}
-
-model Session {
-  id        String   @id
-  sid       String   @unique
-  data      String
-  expiresAt DateTime
+  id            Int      @id @default(autoincrement())
+  targetUrl     String   // ชื่อกลุ่มเป้าหมาย (ในไลน์) หรือ URL โพสต์ (ในเฟส)
+  message       String
+  status        String   @default("PENDING") 
+  runAt         DateTime @default(now())
+  mode          String   @default("SCHEDULE") 
+  keyword       String?
+  repeat        Int      @default(1) 
+  platform      String   @default("FACEBOOK") 
+  accountId     Int?     // สำหรับ Facebook
+  lineAccountId Int?     // ✨ เชื่อมกับบัญชี LINE ส่วนตัว
+  account       BotAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id], onDelete: Cascade)
 }

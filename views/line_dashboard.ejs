@@ -18,32 +18,28 @@
                 
                 <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h2 class="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center text-green-600">
-                        <i class="fab fa-line mr-2 text-2xl"></i> เพิ่มกลุ่มไลน์ (LINE OA)
+                        <i class="fab fa-line mr-2 text-2xl"></i> เพิ่มบัญชีไลน์ (ส่วนตัว)
                     </h2>
                     
                     <% if (lineAccounts.length >= user.lineLimit) { %>
                         <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 md:p-4 mb-6 rounded-r-lg">
-                            <p class="text-yellow-700 text-xs md:text-sm font-medium">⚠️ บัญชีไลน์ของคุณเต็มแล้ว (<%= lineAccounts.length %>/<%= user.lineLimit %>)</p>
-                            <a href="/packages" class="text-blue-600 font-bold text-xs hover:underline mt-1 inline-block">อัปเกรดแพ็คเกจเพื่อเพิ่มอีก</a>
+                            <p class="text-yellow-700 text-xs md:text-sm font-medium">⚠️ บัญชีไลน์ของคุณเต็มแล้ว</p>
                         </div>
                     <% } %>
 
                     <form action="/api/line/add" method="POST" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อกลุ่ม (ไว้อ้างอิง)</label>
-                            <input type="text" name="groupName" placeholder="เช่น กลุ่มแชร์บ้านคุณนก" required 
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อบัญชีไลน์ (ตั้งไว้อ้างอิง)</label>
+                            <input type="text" name="groupName" placeholder="เช่น ไลน์ส่วนตัว - น้องจี" required 
                                 class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm md:text-base">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Group ID (จากบอท)</label>
-                            <input type="text" name="groupId" placeholder="Cxxxxxxxxxxxxxxxxx" required 
-                                class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm md:text-base">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Cookies บัญชี LINE</label>
+                            <textarea name="cookies" placeholder='[{"name":"...", "value":"..."}]' required 
+                                class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none h-24 text-sm"></textarea>
+                            <p class="text-xs text-red-500 mt-1">* ใช้ Cookie-Editor ดึงค่าจากเว็บ LINE (ทำเหมือน Facebook)</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ลิงก์เข้ากลุ่ม (Group Link)</label>
-                            <input type="url" name="groupUrl" placeholder="https://line.me/ti/g/..." 
-                                class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm md:text-base">
-                        </div>
+                        
                         <button type="submit" 
                             <% if (lineAccounts.length >= user.lineLimit) { %>disabled<% } %>
                             class="w-full <% if (lineAccounts.length >= user.lineLimit) { %>bg-gray-300 cursor-not-allowed<% } else { %>bg-green-600 hover:bg-green-700 shadow-md<% } %> text-white font-bold py-3 rounded-xl transition">
@@ -62,20 +58,10 @@
                             <label class="block text-sm font-semibold text-gray-800 mb-2">รูปแบบการทำงาน</label>
                             <div class="flex gap-4">
                                 <label class="flex items-center cursor-pointer">
-                                    <input type="radio" name="mode" value="SCHEDULE" checked onchange="toggleLineKeywordMode()" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+                                    <input type="radio" name="mode" value="SCHEDULE" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
                                     <span class="ml-2 text-sm text-gray-700">⏰ ตั้งเวลาส่ง</span>
                                 </label>
-                                <label class="flex items-center cursor-pointer">
-                                    <input type="radio" name="mode" value="KEYWORD" onchange="toggleLineKeywordMode()" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-                                    <span class="ml-2 text-sm text-gray-700">👀 จองหลังเรท</span>
-                                </label>
                             </div>
-                        </div>
-
-                        <div id="lineKeywordBox" class="hidden mb-4">
-                            <label class="block text-sm font-semibold text-red-600 mb-1">คีย์เวิร์ดของท้าว</label>
-                            <input type="text" name="keyword" placeholder="เช่น ตั้งค่า: 17, วางเรท" 
-                                class="w-full border-red-200 bg-red-50 border p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none">
                         </div>
 
                         <div class="mb-4">
@@ -84,23 +70,28 @@
                                 <option value="1">1 ข้อความ</option>
                                 <option value="2">2 ข้อความ</option>
                                 <option value="3">3 ข้อความ</option>
-                                <option value="4">4 ข้อความ</option>
-                                <option value="5">5 ข้อความ</option>
                             </select>
                         </div>
 
                         <div class="mb-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">เลือกกลุ่มเป้าหมาย</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">เลือกบัญชีไลน์ (ที่จะใช้พิมพ์)</label>
                             <select name="accountId" required class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-white">
-                                <option value="" disabled selected>-- เลือกกลุ่มไลน์ --</option>
+                                <option value="" disabled selected>-- เลือกบัญชีไลน์ --</option>
                                 <% if (lineAccounts && lineAccounts.length > 0) { %>
                                     <% lineAccounts.forEach(acc => { %>
                                         <option value="<%= acc.id %>"><%= acc.groupName %></option>
                                     <% }) %>
                                 <% } else { %>
-                                    <option value="" disabled>ยังไม่มีกลุ่มไลน์</option>
+                                    <option value="" disabled>ยังไม่มีบัญชีไลน์</option>
                                 <% } %>
                             </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-red-600 mb-1">ชื่อกลุ่มเป้าหมาย (พิมพ์ให้ตรงเป๊ะๆ)</label>
+                            <input type="text" name="targetUrl" placeholder="เช่น กลุ่มแชร์เงินล้าน วีไอพี" required 
+                                class="w-full border-red-200 bg-red-50 border p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none">
+                            <p class="text-xs text-gray-500 mt-1">* บอทจะนำชื่อนี้ไปค้นหาในหน้าไลน์</p>
                         </div>
 
                         <div class="mb-4">
@@ -129,12 +120,12 @@
             <div class="lg:col-span-2 space-y-6 md:space-y-8">
                 
                 <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 md:mb-6 border-b pb-3 text-gray-700">📋 กลุ่มไลน์ที่เชื่อมต่อแล้ว</h2>
+                    <h2 class="text-lg md:text-xl font-bold mb-4 md:mb-6 border-b pb-3 text-gray-700">📋 บัญชีไลน์ที่พร้อมใช้งาน</h2>
                     
                     <% if (lineAccounts.length === 0) { %>
                         <div class="text-center py-12 text-gray-400">
-                            <i class="fas fa-layer-group text-5xl mb-4 opacity-20"></i>
-                            <p>ยังไม่มีกลุ่มไลน์ในระบบ</p>
+                            <i class="fas fa-user-circle text-5xl mb-4 opacity-20"></i>
+                            <p>ยังไม่มีบัญชีไลน์ในระบบ</p>
                         </div>
                     <% } else { %>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -142,17 +133,13 @@
                                 <div class="border p-4 md:p-5 rounded-xl hover:border-green-400 transition bg-gray-50 shadow-sm flex flex-col justify-between h-full">
                                     <div class="flex justify-between items-start gap-2">
                                         <div class="w-full overflow-hidden">
-                                            <p class="font-bold text-gray-800 text-base md:text-lg truncate"><%= acc.groupName %></p>
-                                            <p class="text-[10px] md:text-xs text-gray-500 truncate mt-1 bg-white inline-block px-2 py-0.5 rounded border">ID: <%= acc.groupId %></p>
+                                            <p class="font-bold text-gray-800 text-base md:text-lg truncate"><i class="fab fa-line text-green-500 mr-1"></i> <%= acc.groupName %></p>
                                         </div>
                                         <span class="bg-green-100 text-green-700 text-[10px] px-2 py-1 rounded-full font-bold shadow-sm whitespace-nowrap">READY</span>
                                     </div>
-                                    <div class="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
-                                        <a href="<%= acc.groupUrl %>" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center bg-blue-50 px-2 py-1 rounded">
-                                            <i class="fas fa-external-link-alt mr-1"></i> เปิดลิงก์
-                                        </a>
-                                        <button onclick="deleteLineAccount('<%= acc.id %>')" class="text-xs text-red-500 hover:text-red-700">
-                                            ลบกลุ่ม
+                                    <div class="mt-4 pt-3 border-t border-gray-200 flex justify-end items-center">
+                                        <button onclick="deleteLineAccount('<%= acc.id %>')" class="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded-lg">
+                                            ลบบัญชี
                                         </button>
                                     </div>
                                 </div>
@@ -170,9 +157,9 @@
                         <table class="w-full text-sm text-left">
                             <thead class="bg-gray-50 text-gray-600">
                                 <tr>
-                                    <th class="px-4 py-3 rounded-l-xl">ข้อความที่ส่ง</th>
-                                    <th class="px-4 py-3">โหมดการทำงาน</th>
-                                    <th class="px-4 py-3">เวลาที่บันทึกงาน</th>
+                                    <th class="px-4 py-3 rounded-l-xl">เป้าหมาย (กลุ่ม)</th>
+                                    <th class="px-4 py-3">ข้อความ</th>
+                                    <th class="px-4 py-3">เวลาที่บันทึก</th>
                                     <th class="px-4 py-3 rounded-r-xl">สถานะ</th>
                                 </tr>
                             </thead>
@@ -180,28 +167,25 @@
                                 <% if (typeof jobs !== 'undefined' && jobs.length > 0) { %>
                                     <% jobs.forEach(job => { %>
                                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                                            <td class="px-4 py-4 font-medium text-gray-800 truncate max-w-[150px]">
+                                            <td class="px-4 py-4 font-bold text-gray-800 truncate max-w-[120px]">
+                                                <%= job.targetUrl %>
+                                            </td>
+                                            <td class="px-4 py-4 text-gray-600 truncate max-w-[150px]">
                                                 <%= job.message %>
                                             </td>
-                                            <td class="px-4 py-4">
-                                                <% if (job.mode === 'KEYWORD') { %>
-                                                    <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold">รอคีย์เวิร์ด</span>
-                                                <% } else { %>
-                                                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">ตั้งเวลา</span>
-                                                <% } %>
-                                            </td>
                                             <td class="px-4 py-4 text-gray-500 text-xs">
+                                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold block mb-1 w-max">ตั้งเวลา</span>
                                                 <%= new Date(job.runAt).toLocaleString('th-TH') %>
                                             </td>
                                             <td class="px-4 py-4">
                                                 <% if (job.status === 'SUCCESS') { %>
-                                                    <span class="text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg"><i class="fas fa-check-circle mr-1"></i> สำเร็จ</span>
+                                                    <span class="text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg whitespace-nowrap"><i class="fas fa-check-circle mr-1"></i> สำเร็จ</span>
                                                 <% } else if (job.status === 'RUNNING') { %>
-                                                    <span class="text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg"><i class="fas fa-spinner fa-spin mr-1"></i> กำลังทำงาน</span>
+                                                    <span class="text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg whitespace-nowrap"><i class="fas fa-spinner fa-spin mr-1"></i> กำลังทำงาน</span>
                                                 <% } else if (job.status === 'FAILED') { %>
-                                                    <span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-lg"><i class="fas fa-times-circle mr-1"></i> ล้มเหลว</span>
+                                                    <span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-lg whitespace-nowrap"><i class="fas fa-times-circle mr-1"></i> ล้มเหลว</span>
                                                 <% } else { %>
-                                                    <span class="text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded-lg"><i class="fas fa-clock mr-1"></i> รอดำเนินการ</span>
+                                                    <span class="text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded-lg whitespace-nowrap"><i class="fas fa-clock mr-1"></i> รอดำเนินการ</span>
                                                 <% } %>
                                             </td>
                                         </tr>
@@ -225,7 +209,7 @@
     
     <script>
         async function deleteLineAccount(id) {
-            if(!confirm('ยืนยันว่าจะลบกลุ่มนี้ออกจากระบบ?')) return;
+            if(!confirm('ยืนยันว่าจะลบบัญชีนี้ออกจากระบบ?')) return;
             try {
                 const res = await fetch(`/api/line/delete/${id}`, { method: 'DELETE' });
                 if(res.ok) {
@@ -235,16 +219,6 @@
                 }
             } catch (err) {
                 alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-            }
-        }
-        
-        function toggleLineKeywordMode() {
-            const mode = document.querySelector('input[name="mode"]:checked').value;
-            const keywordBox = document.getElementById('lineKeywordBox');
-            if (mode === 'KEYWORD') {
-                keywordBox.classList.remove('hidden');
-            } else {
-                keywordBox.classList.add('hidden');
             }
         }
     </script>
