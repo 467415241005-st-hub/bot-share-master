@@ -22,7 +22,8 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "multer": "^2.1.1",
-    "puppeteer": "^24.40.0"
+    "puppeteer": "^24.40.0",
+    "playwright": "^1.40.0"
   },
   "devDependencies": {
     "prisma": "^6.4.1"
