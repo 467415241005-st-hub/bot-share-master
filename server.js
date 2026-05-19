@@ -241,21 +241,29 @@ app.get('/history', isLogin, async (req, res) => {
     res.render('history', { payments, page: 'history' });
 });
 
+// Route สำหรับหน้าแรก (จัดการบอทเฟส) - รวมไว้ที่เดียวที่นี่
 app.get('/', isLogin, async (req, res) => {
-    // 1. ดึงข้อมูลบัญชีบอท
-    const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
-    
-    // 2. [สำคัญ] เพิ่มบรรทัดดึงข้อมูล jobs นี้เข้าไปครับ
-    const jobs = await prisma.jobQueue.findMany({ 
-        where: { userId: req.session.userId }, 
-        orderBy: { id: 'desc' },
-        take: 10 
-    });
+    try {
+        // 1. ดึงข้อมูลบัญชีบอทเฟส
+        const accounts = await prisma.botAccount.findMany({ 
+            where: { userId: req.session.userId } 
+        });
+        
+        // 2. ดึงข้อมูลประวัติงาน (ป้องกัน Error: jobs is not defined)
+        const jobs = await prisma.jobQueue.findMany({ 
+            where: { userId: req.session.userId }, 
+            orderBy: { id: 'desc' },
+            take: 10 
+        });
 
-    // 3. ส่ง jobs เข้าไปใน render
-    res.render('index', { accounts, jobs, page: 'home', user: req.session.user });
+        // 3. Render หน้า index โดยส่ง jobs ไปด้วย
+        res.render('index', { accounts, jobs, page: 'home', user: req.session.user });
+    } catch (error) {
+        res.status(500).send("Error loading dashboard: " + error.message);
+    }
 });
 
+// Route สำหรับหน้า home (หน้าแรกของเว็บ)
 app.get('/home', isLogin, (req, res) => {
     res.render('home', { page: 'home', user: req.session.user });
 });
