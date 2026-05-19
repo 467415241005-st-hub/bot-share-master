@@ -226,6 +226,15 @@
 // --- ระบบจัดการ Modal ลบบัญชี ---
 let accountIdToDelete = null;
 
+// เพิ่มฟังก์ชันนี้ไว้ในส่วน <script> ของไฟล์ views/index.ejs
+function showError(msg) {
+    alert('เกิดข้อผิดพลาด: ' + msg); // หรือใช้การแสดงผลแบบ UI สวยๆ ถ้าคุณมี library อื่น
+}
+
+function showSuccess(msg) {
+    alert('สำเร็จ: ' + msg);
+}
+
 function openDeleteModal(id) {
     accountIdToDelete = id;
     const modal = document.getElementById('deleteModal');
