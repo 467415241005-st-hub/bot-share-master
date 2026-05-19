@@ -241,6 +241,12 @@ app.get('/history', isLogin, async (req, res) => {
     res.render('history', { payments, page: 'history' });
 });
 
-app.get('/login', (req, res) => res.render('login'));
+app.get('/', isLogin, (req, res) => {
+    res.render('home', { page: 'home', user: req.session.user });
+});
+
+app.get('/home', isLogin, (req, res) => {
+    res.render('home', { page: 'home', user: req.session.user });
+});
 
 app.listen(PORT, () => console.log(`✅ Server is running on port ${PORT}`));
