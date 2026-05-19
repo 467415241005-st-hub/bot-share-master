@@ -241,9 +241,11 @@ app.get('/history', isLogin, async (req, res) => {
     res.render('history', { payments, page: 'history' });
 });
 
-app.get('/', isLogin, (req, res) => {
-    res.render('home', { page: 'home', user: req.session.user });
-});
+app.get('/', isLogin, async (req, res) => {
+    // ดึงข้อมูลบอทเฟสบุ๊กมาแสดง
+    const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
+    res.render('index', { accounts, page: 'home', user: req.session.user });
+})
 
 app.get('/home', isLogin, (req, res) => {
     res.render('home', { page: 'home', user: req.session.user });
