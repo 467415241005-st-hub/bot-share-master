@@ -9,33 +9,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 1. ตาราง User
 model User {
   id         String   @id @default(uuid())
   username   String   @unique
   email      String   @unique
   password   String
   credits    Float    @default(0)
-  lineLimit  Int      @default(1) // โควต้าจำนวนกลุ่ม/บัญชี LINE
+  role       String   @default("USER") // USER หรือ ADMIN
+  lineLimit  Int      @default(1)
   createdAt  DateTime @default(now())
-  lineAccs   LineAccount[]
+
   accounts   BotAccount[]
+  lineAccs   LineAccount[]
+  payments   Payment[]
 }
 
+// 2. ตารางบัญชี Facebook
+model BotAccount {
+  id         Int      @id @default(autoincrement())
+  fbEmail    String   @unique
+  fbPassword String
+  cookies    String   @db.Text
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  jobs       JobQueue[]
+}
+
+// 3. ตารางบัญชี LINE ส่วนตัว (ระบบใหม่)
 model LineAccount {
   id           Int      @id @default(autoincrement())
-  groupName    String   // ชื่อบัญชีเอาไว้อ้างอิง
+  groupName    String   
   loginType    String   @default("COOKIE") 
   lineEmail    String?  
   linePassword String? 
-  cookies      String?  @db.Text // ✨ เก็บ Cookie บัญชีส่วนตัว
+  cookies      String?  @db.Text 
   userId       String
   user         User     @relation(fields: [userId], references: [id])
   jobs         JobQueue[]
 }
 
+// 4. ตารางคิวงานจองแชร์
 model JobQueue {
   id            Int      @id @default(autoincrement())
-  targetUrl     String   // ชื่อกลุ่มเป้าหมาย (ในไลน์) หรือ URL โพสต์ (ในเฟส)
+  targetUrl     String   
   message       String
   status        String   @default("PENDING") 
   runAt         DateTime @default(now())
@@ -43,8 +60,27 @@ model JobQueue {
   keyword       String?
   repeat        Int      @default(1) 
   platform      String   @default("FACEBOOK") 
-  accountId     Int?     // สำหรับ Facebook
-  lineAccountId Int?     // ✨ เชื่อมกับบัญชี LINE ส่วนตัว
+  accountId     Int?     
+  lineAccountId Int?     
   account       BotAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
   lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id], onDelete: Cascade)
+}
+
+// 5. ตารางประวัติการเติมเงิน/ส่งสลิป
+model Payment {
+  id        Int      @id @default(autoincrement())
+  amount    Float
+  slipUrl   String   
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// 6. ตารางจัดการ Session ของระบบล็อกอิน
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String   @db.Text
+  expiresAt DateTime
 }
