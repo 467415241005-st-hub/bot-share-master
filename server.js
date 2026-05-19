@@ -242,10 +242,19 @@ app.get('/history', isLogin, async (req, res) => {
 });
 
 app.get('/', isLogin, async (req, res) => {
-    // ดึงข้อมูลบอทเฟสบุ๊กมาแสดง
+    // 1. ดึงข้อมูลบอทเฟสบุ๊ก
     const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
-    res.render('index', { accounts, page: 'home', user: req.session.user });
-})
+    
+    // 2. ดึงข้อมูลประวัติการทำงาน (Jobs) เพิ่มบรรทัดนี้ครับ
+    const jobs = await prisma.jobQueue.findMany({ 
+        where: { userId: req.session.userId }, 
+        orderBy: { id: 'desc' },
+        take: 10 // ดึงมาแค่ 10 รายการล่าสุด
+    });
+
+    // 3. ส่งตัวแปร jobs ไปด้วย
+    res.render('index', { accounts, jobs, page: 'home', user: req.session.user });
+});
 
 app.get('/home', isLogin, (req, res) => {
     res.render('home', { page: 'home', user: req.session.user });
