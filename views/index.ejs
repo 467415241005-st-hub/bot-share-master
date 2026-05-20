@@ -2,167 +2,192 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Welloff</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard - Welloff System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* ล็อกไม่ให้ตัวหนังสือเพี้ยนบน iOS */
+        input, textarea, select { font-size: 16px !important; }
+    </style>
 </head>
-<body class="bg-gray-50 pb-10">
+<body class="bg-gray-50 pb-12 font-sans antialiased text-gray-900">
 
     <%- include('partials/navbar') %>
 
-    <div class="max-w-7xl mx-auto px-4 mt-6">
-        <div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-6 md:p-8 rounded-2xl shadow-lg flex flex-col sm:flex-row items-center text-center sm:text-left mb-8">
-            <div class="bg-white/20 p-4 rounded-xl mb-4 sm:mb-0 sm:mr-6 text-4xl">🤖</div>
+    <div id="toastNotification" class="fixed top-20 right-4 z-50 transform translate-x-full transition-transform duration-300 bg-white shadow-2xl rounded-2xl p-4 border border-gray-100 hidden max-w-sm w-full">
+        <div class="flex items-center space-x-3">
+            <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"></div>
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold">Bot Share Master</h1>
-                <p class="opacity-80 text-sm md:text-base mt-1">ระบบจัดการบอทจองแชร์ (เซิร์ฟเวอร์ส่วนตัว)</p>
+                <p id="toastTitle" class="font-bold text-gray-800 text-sm"></p>
+                <p id="toastMessage" class="text-xs text-gray-500 mt-0.5"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 mt-6">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 md:p-8 rounded-3xl shadow-md flex flex-col sm:flex-row items-center text-center sm:text-left mb-6">
+            <div class="bg-white/10 p-4 rounded-2xl mb-4 sm:mb-0 sm:mr-6 text-4xl shadow-inner animate-bounce">🤖</div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Welloff Facebook Control</h1>
+                <p class="opacity-80 text-xs md:text-sm mt-1 font-medium">ระบบตั้งค่าและสั่งงานบอทจองแชร์อัตโนมัติความเร็วสูง</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             
-            <div class="space-y-6 md:space-y-8">
-                <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center"><i class="fas fa-plus-circle mr-2 text-blue-500"></i> เพิ่มบัญชี Facebook</h2>
-                    <form action="/api/accounts/add" method="POST" class="space-y-4">
-                        <input type="text" name="fbEmail" placeholder="อีเมล/เบอร์โทร" required class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                        <input type="password" name="fbPassword" placeholder="รหัสผ่าน" required class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                        <textarea name="cookies" placeholder='[{"name":"c_user",...}]' class="w-full border-gray-200 border p-3 rounded-xl h-24 text-xs font-mono focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
-                        <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 shadow-md transition">บันทึกบัญชี</button>
-                    </form>
-                </div>
-
-                <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center text-blue-600">
-                        <i class="fas fa-clock mr-2"></i> สั่งงานบอท (Facebook)
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg md:text-xl font-bold mb-5 flex items-center text-blue-600">
+                        <i class="fas fa-paper-plane mr-2"></i> ตั้งค่าการส่งงาน
                     </h2>
-                    <div class="p-4 bg-blue-50 border border-blue-100 rounded-xl mb-4">
-    <label class="block text-sm font-semibold text-gray-800 mb-2">รูปแบบการทำงาน</label>
-    <div class="flex gap-4">
-        <label class="flex items-center cursor-pointer">
-            <input type="radio" name="mode" value="SCHEDULE" checked onchange="toggleKeywordMode()" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-            <span class="ml-2 text-sm text-gray-700">⏰ ตั้งเวลาโพสต์</span>
-        </label>
-        <label class="flex items-center cursor-pointer">
-            <input type="radio" name="mode" value="KEYWORD" onchange="toggleKeywordMode()" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
-            <span class="ml-2 text-sm text-gray-700">👀 จองหลังเรท (จับคีย์เวิร์ด)</span>
-        </label>
-    </div>
-</div>
+                    
+                    <form id="fbJobForm" action="/api/jobs/add" method="POST" class="space-y-5">
+                        
+                        <div class="p-3.5 bg-gray-50 border border-gray-200 rounded-2xl">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">รูปแบบการทำงาน</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="mode" value="SCHEDULE" checked onchange="toggleMode()" class="peer sr-only">
+                                    <div class="text-center py-2.5 bg-white border border-gray-200 rounded-xl peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white font-bold transition text-sm text-gray-600 shadow-sm">⏰ ตั้งเวลาส่ง</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="mode" value="KEYWORD" onchange="toggleMode()" class="peer sr-only">
+                                    <div class="text-center py-2.5 bg-white border border-gray-200 rounded-xl peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white font-bold transition text-sm text-gray-600 shadow-sm">👀 จับคีย์เวิร์ด</div>
+                                </label>
+                            </div>
+                        </div>
 
-<div id="keywordBox" class="hidden mb-4">
-    <label class="block text-sm font-semibold text-red-600 mb-1">คีย์เวิร์ดของท้าว (คำที่ให้บอทรอดักจับ)</label>
-    <input type="text" name="keyword" placeholder="เช่น ตั้งค่า: 17, วางเรท" 
-        class="w-full border-red-200 bg-red-50 border p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none">
-    <p class="text-[10px] text-red-500 mt-1">* บอทจะจองก็ต่อเมื่อท้าวโพสต์คำนี้เท่านั้น</p>
-</div>
+                        <div id="keywordContainer" class="hidden animate-fade-in">
+                            <label class="block text-sm font-semibold text-red-600 mb-1">คีย์เวิร์ดดักจับจากท้าว</label>
+                            <input type="text" name="keyword" placeholder="เช่น ตั้งค่า, วางเรท" class="w-full bg-red-50/50 border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-base">
+                        </div>
 
-<div class="mb-4">
-    <label class="block text-sm font-semibold text-gray-700 mb-1">จำนวนครั้งที่ต้องการคอมเมนต์</label>
-    <select name="repeat" class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-        <option value="1">1 คอมเมนต์</option>
-        <option value="2">2 คอมเมนต์</option>
-        <option value="3">3 คอมเมนต์</option>
-        <option value="4">4 คอมเมนต์</option>
-        <option value="5">5 คอมเมนต์</option>
-    </select>
-</div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">เลือกบัญชีบอท</label>
-                            <select name="accountId" required class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
-                                <% accounts.forEach(acc => { %>
-                                    <option value="<%= acc.id %>"><%= acc.fbEmail %></option>
-                                <% }) %>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนข้อความที่ต้องการส่ง</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="repeat" value="1" checked class="peer sr-only">
+                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-bold transition text-sm">1 ข้อความ</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="repeat" value="2" class="peer sr-only">
+                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-bold transition text-sm">2 ข้อความ</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="repeat" value="3" class="peer sr-only">
+                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-bold transition text-sm">3 ข้อความ</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">เลือกบัญชีบอท Facebook</label>
+                            <select name="accountId" required class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white text-base">
+                                <option value="" disabled selected>-- เลือกบัญชีบอท --</option>
+                                <% if (accounts && accounts.length > 0) { %>
+                                    <% accounts.forEach(acc => { %>
+                                        <option value="<%= acc.id %>"><%= acc.name || 'บอทเฟสบุ๊ก' %></option>
+                                    <% }) %>
+                                <% } %>
                             </select>
                         </div>
+
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ลิงก์โพสต์ที่ต้องการจอง</label>
-                            <input type="url" name="targetUrl" placeholder="https://www.facebook.com/..." required 
-                                class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm md:text-base">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ลิงก์โพสต์เป้าหมาย (URL)</label>
+                            <input type="url" name="targetUrl" required placeholder="https://facebook.com/..." class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base">
                         </div>
+
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ข้อความที่จะคอมเมนต์</label>
-                            <input type="text" name="message" placeholder="เช่น จองครับ, รับครับ" required 
-                                class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ข้อความที่จะพิมพ์คอมเมนต์</label>
+                            <textarea name="message" rows="3" required placeholder="พิมพ์คำจอง เช่น จอง 1 ท้าว" class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base"></textarea>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">เวลาที่ให้บอททำงาน (ถ้าไม่ตั้งจะส่งทันที)</label>
-                            <input type="datetime-local" name="runAt" 
-                                class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+
+                        <div id="timeContainer">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">เวลาตั้งรันระบบ</label>
+                            <input type="datetime-local" name="runAt" class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base">
                         </div>
-                        
-                        <div class="flex gap-2">
-                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">
-                                ตั้งเวลาจอง
+
+                        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                            <button type="submit" class="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition shadow-md text-base">
+                                🚀 บันทึกตารางงาน
                             </button>
-                            <button type="button" onclick="sendNow()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition shadow-md">
-                                🚀 ส่งทันที
+                            <button type="button" onclick="sendNow()" class="w-full sm:flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition shadow-md text-base">
+                                <i class="fas fa-bolt text-yellow-300 mr-1"></i> ยิงส่งด่วนทันที
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 space-y-8">
-                
-                <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 md:mb-6 border-b pb-3 text-gray-700">📋 บัญชีบอทที่พร้อมใช้งาน</h2>
-                    <% if (accounts.length === 0) { %>
-                        <div class="text-center py-12 text-gray-400">
-                            <i class="fas fa-users-slash text-4xl mb-3 opacity-30"></i>
-                            <p>ยังไม่มีบัญชีในระบบ</p>
-                        </div>
-                    <% } else { %>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <% accounts.forEach(acc => { %>
-                                <div class="bg-gray-50 border p-4 rounded-xl shadow-sm hover:bg-white hover:border-blue-300 transition flex justify-between items-center gap-3">
-                                    <div class="w-full truncate">
-                                        <p class="font-bold text-gray-800 truncate"><i class="fab fa-facebook text-blue-600 mr-2"></i><%= acc.fbEmail %></p>
-                                        <p class="text-xs text-gray-400 mt-1">ID: <%= acc.id %></p>
-                                        <span class="inline-block mt-1 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">READY</span>
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700 flex items-center">
+                        <i class="fas fa-history mr-2 text-indigo-500"></i> ประวัติงานล่าสุด (Facebook)
+                    </h2>
+
+                    <div class="block md:hidden space-y-4">
+                        <% if (typeof jobs !== 'undefined' && jobs.length > 0) { %>
+                            <% jobs.forEach(job => { %>
+                                <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded font-bold">
+                                            <%= job.mode === 'KEYWORD' ? '👀 คีย์เวิร์ด' : '⏰ ตั้งเวลา' %>
+                                        </span>
+                                        <div>
+                                            <% if (job.status === 'SUCCESS') { %>
+                                                <span class="text-xs text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg">สำเร็จ</span>
+                                            <% } else if (job.status === 'RUNNING') { %>
+                                                <span class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg animate-pulse">กำลังทำงาน</span>
+                                            <% } else if (job.status === 'FAILED') { %>
+                                                <span class="text-xs text-red-600 font-bold bg-red-50 px-2 py-1 rounded-lg">ล้มเหลว</span>
+                                            <% } else { %>
+                                                <span class="text-xs text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded-lg">รอดำเนินการ</span>
+                                            <% } %>
+                                        </div>
                                     </div>
-                                    <button onclick="openDeleteModal('<%= acc.id %>')" class="text-red-500 text-sm hover:text-red-700 hover:underline font-medium bg-red-50 p-2 rounded-lg transition shrink-0">
-                                        <i class="fas fa-trash-alt sm:hidden mr-1"></i>ลบ
-                                    </button>
+                                    <p class="text-sm font-bold text-gray-800 truncate"><i class="fas fa-link mr-1 text-gray-400"></i> <%= job.targetUrl %></p>
+                                    <p class="text-xs text-gray-600"><i class="fas fa-comment-alt mr-1 text-gray-400"></i> <%= job.message %></p>
+                                    <p class="text-[10px] text-gray-400"><%= new Date(job.runAt).toLocaleString('th-TH') %></p>
                                 </div>
                             <% }) %>
-                        </div>
-                    <% } %>
-                </div>
+                        <% } else { %>
+                            <p class="text-center text-gray-400 py-6">ยังไม่มีรายการประวัติ</p>
+                        <% } %>
+                    </div>
 
-                <div class="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 class="text-lg md:text-xl font-bold mb-4 flex items-center gap-2">
-                        <i class="fas fa-history text-blue-600"></i> สถานะการทำงานล่าสุด
-                    </h3>
-                    <div class="overflow-x-auto rounded-xl border border-gray-100">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
-                            <thead class="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-600">
                                 <tr>
-                                    <th class="p-4">เวลา</th>
-                                    <th class="p-4">บัญชี</th>
-                                    <th class="p-4">ข้อความ</th>
-                                    <th class="p-4">สถานะ</th>
+                                    <th class="px-4 py-3 rounded-l-xl">ลิงก์เป้าหมาย</th>
+                                    <th class="px-4 py-3">ข้อความ</th>
+                                    <th class="px-4 py-3">รายละเอียดเวลา</th>
+                                    <th class="px-4 py-3 rounded-r-xl">สถานะระบบ</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-sm">
-                                <% if(jobs.length === 0) { %>
-                                    <tr>
-                                        <td colspan="4" class="text-center py-8 text-gray-400">ยังไม่มีประวัติการสั่งงาน</td>
-                                    </tr>
-                                <% } else { %>
+                            <tbody>
+                                <% if (typeof jobs !== 'undefined' && jobs.length > 0) { %>
                                     <% jobs.forEach(job => { %>
-                                        <tr class="border-t border-gray-50 hover:bg-gray-50 transition">
-                                            <td class="p-4 text-gray-500 whitespace-nowrap"><%= job.runAt.toLocaleString('th-TH') %></td>
-                                            <td class="p-4 font-medium"><%= job.account ? job.account.fbEmail : 'บัญชีถูกลบ' %></td>
-                                            <td class="p-4 text-gray-600 truncate max-w-[200px]"><%= job.message %></td>
-                                            <td class="p-4">
-                                                <span class="px-2 py-1 rounded-full text-xs font-bold 
-                                                    <%= job.status === 'SUCCESS' ? 'bg-green-100 text-green-600' : 
-                                                        job.status === 'FAILED' ? 'bg-red-100 text-red-600' : 
-                                                        'bg-yellow-100 text-yellow-600' %>">
-                                                    <%= job.status %>
+                                        <tr class="border-b border-gray-50 hover:bg-gray-100/50 transition">
+                                            <td class="px-4 py-4 max-w-[180px] truncate font-medium text-blue-600"><%= job.targetUrl %></td>
+                                            <td class="px-4 py-4 max-w-[150px] truncate text-gray-700"><%= job.message %></td>
+                                            <td class="px-4 py-4 text-xs text-gray-500">
+                                                <span class="bg-blue-50 text-blue-600 font-bold px-1.5 py-0.5 rounded text-[10px] block mb-1 w-max">
+                                                    <%= job.mode === 'KEYWORD' ? 'คีย์เวิร์ด' : 'ตั้งเวลา' %>
                                                 </span>
+                                                <%= new Date(job.runAt).toLocaleString('th-TH') %>
+                                            </td>
+                                            <td class="px-4 py-4">
+                                                <% if (job.status === 'SUCCESS') { %>
+                                                    <span class="text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg"><i class="fas fa-check-circle mr-1"></i> สำเร็จ</span>
+                                                <% } else if (job.status === 'RUNNING') { %>
+                                                    <span class="text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg"><i class="fas fa-spinner fa-spin mr-1"></i> รันระบบ</span>
+                                                <% } else if (job.status === 'FAILED') { %>
+                                                    <span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-lg"><i class="fas fa-times-circle mr-1"></i> พลั้งพลาด</span>
+                                                <% } else { %>
+                                                    <span class="text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded-lg"><i class="fas fa-clock mr-1"></i> รอคิว</span>
+                                                <% } %>
                                             </td>
                                         </tr>
                                     <% }) %>
@@ -171,190 +196,71 @@
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
-    <div id="deleteModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 opacity-0">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-300" id="deleteModalCard">
-            <div class="p-6 text-center">
-                <div class="w-20 h-20 mx-auto bg-red-50 rounded-full flex items-center justify-center mb-5 border-[6px] border-red-100">
-                    <i class="fas fa-trash-alt text-3xl text-red-500"></i>
-                </div>
-                
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">ยืนยันการลบ?</h3>
-                <p class="text-gray-500 text-sm mb-6 leading-relaxed">
-                    คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนี้? <br>
-                    <span class="text-red-500 font-medium">หากลบแล้ว งานที่ตั้งเวลาไว้จะถูกยกเลิกทั้งหมด</span>
-                </p>
-                
-                <div class="flex gap-3">
-                    <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition">
-                        ยกเลิก
-                    </button>
-                    <button onclick="confirmDelete()" id="confirmDeleteBtn" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition shadow-md shadow-red-500/30">
-                        ใช่, ลบเลย
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="successModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 opacity-0">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-300 p-6 text-center" id="successModalCard">
-            <div class="w-20 h-20 mx-auto bg-green-50 rounded-full flex items-center justify-center mb-5 border-[6px] border-green-100">
-                <i class="fas fa-check text-4xl text-green-500"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">สำเร็จ!</h3>
-            <p class="text-gray-500 mb-6" id="successMsg">ทำรายการเรียบร้อยแล้ว</p>
-        </div>
-    </div>
-
-    <div id="errorModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 opacity-0">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-300 p-6 text-center" id="errorModalCard">
-            <div class="w-20 h-20 mx-auto bg-red-50 rounded-full flex items-center justify-center mb-5 border-[6px] border-red-100">
-                <i class="fas fa-times text-4xl text-red-500"></i>
-            </div>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">ผิดพลาด!</h3>
-            <p class="text-gray-500 mb-6" id="errorMsg">เกิดข้อผิดพลาด กรุณาลองใหม่</p>
-            <button onclick="closeErrorModal()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition">
-                ตกลง
-            </button>
-        </div>
-    </div>
-<script>
-// --- ระบบจัดการ Modal ลบบัญชี ---
-let accountIdToDelete = null;
-
-// เพิ่มฟังก์ชันนี้ไว้ในส่วน <script> ของไฟล์ views/index.ejs
-function showError(msg) {
-    alert('เกิดข้อผิดพลาด: ' + msg); // หรือใช้การแสดงผลแบบ UI สวยๆ ถ้าคุณมี library อื่น
-}
-
-function showSuccess(msg) {
-    alert('สำเร็จ: ' + msg);
-}
-
-function openDeleteModal(id) {
-    accountIdToDelete = id;
-    const modal = document.getElementById('deleteModal');
-    const card = document.getElementById('deleteModalCard');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.remove('opacity-0'); card.classList.remove('scale-95'); }, 10);
-}
-
-function closeDeleteModal() {
-    accountIdToDelete = null;
-    const modal = document.getElementById('deleteModal');
-    const card = document.getElementById('deleteModalCard');
-    modal.classList.add('opacity-0'); card.classList.add('scale-95');
-    setTimeout(() => { modal.classList.add('hidden'); }, 300);
-}
-
-// --- ระบบ Card แจ้งเตือน (สวยงาม) ---
-function showSuccess(msg) {
-    document.getElementById('successMsg').innerText = msg;
-    const modal = document.getElementById('successModal');
-    const card = document.getElementById('successModalCard');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.remove('opacity-0'); card.classList.remove('scale-95'); }, 10);
-    
-    // โชว์ความสำเร็จ 1.5 วินาที แล้วรีเฟรชหน้าต่างอัตโนมัติ
-    setTimeout(() => { location.reload(); }, 1500);
-}
-
-function showError(msg) {
-    document.getElementById('errorMsg').innerText = msg;
-    const modal = document.getElementById('errorModal');
-    const card = document.getElementById('errorModalCard');
-    modal.classList.remove('hidden');
-    setTimeout(() => { modal.classList.remove('opacity-0'); card.classList.remove('scale-95'); }, 10);
-}
-
-function closeErrorModal() {
-    const modal = document.getElementById('errorModal');
-    const card = document.getElementById('errorModalCard');
-    modal.classList.add('opacity-0'); card.classList.add('scale-95');
-    setTimeout(() => { modal.classList.add('hidden'); }, 300);
-}
-
-// --- ยืนยันการลบของจริง ---
-async function confirmDelete() {
-    if (!accountIdToDelete) return;
-    
-    const btn = document.getElementById('confirmDeleteBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังลบ...';
-    btn.disabled = true;
-
-    try {
-        const res = await fetch('/api/accounts/delete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accountId: accountIdToDelete })
-        });
-        
-        closeDeleteModal(); // ปิดหน้าต่างยืนยันอันเก่าก่อน
-        
-        if(res.ok) {
-            showSuccess('ลบบัญชีและประวัติงานเรียบร้อยแล้ว');
-        } else {
-            showError('ลบไม่สำเร็จ กรุณาลองใหม่');
+    <script>
+        function showToast(title, message, isSuccess = true) {
+            const toast = document.getElementById('toastNotification');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastMessage').innerText = message;
+            
+            if (isSuccess) {
+                icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-green-500 text-white font-bold";
+                icon.innerHTML = "✓";
+            } else {
+                icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-red-500 text-white font-bold";
+                icon.innerHTML = "✕";
+            }
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-x-full'), 50);
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3500);
         }
-    } catch(err) {
-        closeDeleteModal();
-        showError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-}
 
-// --- ฟังก์ชันส่งทันที ---
-async function sendNow() {
-    const accountId = document.querySelector('select[name="accountId"]').value;
-    const targetUrl = document.querySelector('input[name="targetUrl"]').value;
-    const message = document.querySelector('input[name="message"]').value; 
-    const repeat = document.querySelector('select[name="repeat"]').value; 
-
-    if(!targetUrl || !message) return showError('กรุณากรอกลิงก์และข้อความให้ครบ');
-
-    const btn = event.currentTarget;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังส่ง...';
-    btn.disabled = true;
-
-    try {
-        const res = await fetch('/api/facebook/send-now', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accountId, targetUrl, message, repeat }) // ✨ เพิ่ม repeat ตรงนี้
-        });
-        
-        if(res.ok) {
-            showSuccess('สั่งงานบอทเฟซบุ๊กสำเร็จ!');
-        } else {
-            const data = await res.json();
-            // ⭐ ให้โชว์ Error จริงๆ ที่ส่งมาจากเซิร์ฟเวอร์
-            showError('เกิดข้อผิดพลาด: ' + (data.error || 'ไม่ทราบสาเหตุ'));
+        function toggleMode() {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const container = document.getElementById('keywordContainer');
+            if (mode === 'KEYWORD') {
+                container.classList.remove('hidden');
+                document.getElementsByName('keyword')[0].required = true;
+            } else {
+                container.classList.add('hidden');
+                document.getElementsByName('keyword')[0].required = false;
+            }
         }
-    } catch(err) {
-        showError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-}
 
-function toggleKeywordMode() {
-    const mode = document.querySelector('input[name="mode"]:checked').value;
-    const keywordBox = document.getElementById('keywordBox');
-    if (mode === 'KEYWORD') {
-        keywordBox.classList.remove('hidden');
-    } else {
-        keywordBox.classList.add('hidden');
-    }
-}
-</script>
+        async function sendNow() {
+            const accountId = document.querySelector('select[name="accountId"]').value;
+            const targetUrl = document.querySelector('input[name="targetUrl"]').value;
+            const message = document.querySelector('textarea[name="message"]').value;
+            const repeat = document.querySelector('input[name="repeat"]:checked').value;
+
+            if(!accountId || !targetUrl || !message) {
+                return showToast('กรอกข้อมูลไม่ครบ', 'โปรดเลือกบัญชีบอท ลิงก์ และข้อความคอมเมนต์ครับ', false);
+            }
+
+            try {
+                const res = await fetch('/api/facebook/send-now', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ accountId, targetUrl, message, repeat })
+                });
+                if(res.ok) {
+                    showToast('ยิงส่งด่วนสำเร็จ!', 'ระบบคอมเมนต์ทำงานบอทเรียบร้อยแล้ว');
+                } else {
+                    const data = await res.json();
+                    showToast('เกิดข้อผิดพลาดหลังบ้าน', data.error || 'ไม่สามารถสั่งงานบอทได้', false);
+                }
+            } catch(err) {
+                showToast('การเชื่อมต่อล้มเหลว', 'ไม่สามารถติดต่อ Web Server ได้', false);
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,48 +1,56 @@
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<body class="bg-gray-50 pb-10">
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เติมเครดิต - Welloff System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        input, textarea, select { font-size: 16px !important; }
+    </style>
+</head>
+<body class="bg-gray-50 pb-12 font-sans antialiased text-gray-900">
     <%- include('partials/navbar') %>
     
     <div class="max-w-md mx-auto mt-6 md:mt-10 px-4">
         <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg border border-gray-100">
             <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
                     <i class="fas fa-wallet"></i>
                 </div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800">เติมเครดิต</h1>
-                <p class="text-gray-500 text-sm mt-1">สแกน QR Code ด้านล่างเพื่อโอนเงิน</p>
+                <p class="text-gray-500 text-sm mt-1">สแกน QR Code ด้านล่างเพื่อชำระเงิน</p>
             </div>
             
             <div class="mb-8 text-center bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                <img src="/uploads/slips/images/promptpay-qr.png" class="mx-auto w-48 md:w-56 border-4 border-blue-500 p-2 rounded-xl bg-white shadow-sm mb-4">
-                <div class="inline-block bg-blue-100 px-4 py-2 rounded-lg">
-                    <p class="text-xs text-blue-600 font-medium mb-1">บัญชีปลายทาง</p>
-                    <p class="font-bold text-blue-800 text-lg">นาย อนุสิทธิ์ (TMB)</p>
-                </div>
+                <img src="/uploads/slips/images/qr-code.png" alt="QR Code" class="w-48 h-48 mx-auto rounded-xl shadow-sm mb-4 object-contain bg-white p-2">
+                <p class="text-sm font-bold text-gray-800">ธนาคาร: กสิกรไทย (KBANK)</p>
+                <p class="text-sm text-gray-600 mt-1">ชื่อบัญชี: จิรภัทร พงษ์เสวี</p>
+                <p class="text-lg font-mono font-bold text-blue-600 mt-2 bg-blue-50 py-1 px-3 rounded-lg inline-block">123-4-56789-0</p>
             </div>
-
-            <form action="/api/payments/upload" method="POST" enctype="multipart/form-data" class="space-y-5">
+            
+            <form action="/api/topup" method="POST" enctype="multipart/form-data" class="space-y-5">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">ระบุจำนวนเงินที่โอน (บาท)</label>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">จำนวนเงินที่โอน (บาท)</label>
                     <div class="relative">
                         <span class="absolute left-4 top-3.5 text-gray-400 font-bold">฿</span>
-                        <input type="number" name="amount" required 
-                            class="w-full bg-gray-50 border-gray-200 border p-3.5 pl-10 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
+                        <input type="number" name="amount" required step="0.01"
+                            class="w-full bg-gray-50 border-gray-200 border p-3.5 pl-10 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-base" 
                             placeholder="เช่น 500">
                     </div>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">แนบรูปสลิปโอนเงิน (หลักฐาน)</label>
                     <input type="file" name="slip" accept="image/*" required 
-                        class="w-full bg-gray-50 border-gray-200 border p-3 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        class="w-full bg-gray-50 border-gray-200 border p-3 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-base file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                 </div>
                 
-                <button type="submit" class="w-full mt-2 bg-blue-600 text-white py-3.5 md:py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition transform hover:-translate-y-1 flex justify-center items-center">
-                    <i class="fas fa-paper-plane mr-2"></i> ส่งสลิปให้แอดมินตรวจสอบ
+                <button type="submit" class="w-full mt-4 bg-blue-600 text-white py-3.5 md:py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transform hover:-translate-y-1 transition duration-200 text-base">
+                    <i class="fas fa-check-circle mr-1"></i> แจ้งเติมเครดิต
                 </button>
             </form>
         </div>
     </div>
 </body>
+</html>

@@ -1,45 +1,57 @@
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
-
-<div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-    <div class="max-w-md w-full p-6 md:p-8 bg-white rounded-3xl shadow-xl border border-gray-100">
-        <div class="text-center mb-8 md:mb-10">
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>สมัครสมาชิก - Welloff System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        input, textarea, select { font-size: 16px !important; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans antialiased text-gray-900">
+    <div class="min-h-screen flex items-center justify-center p-4 md:p-8">
+        <div class="max-w-md w-full p-6 md:p-8 bg-white rounded-3xl shadow-xl border border-gray-100 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
             
-            <img src="/uploads/slips/images/logo.png" alt="Welloff System Logo" class="w-24 md:w-28 h-auto mx-auto mb-5 object-contain hover:scale-105 transition-transform duration-300 drop-shadow-md">
+            <div class="text-center mb-8 md:mb-10 pt-2">
+                <img src="/uploads/slips/images/logo.png" alt="Welloff System Logo" class="w-24 md:w-28 h-auto mx-auto mb-5 object-contain hover:scale-105 transition-transform duration-300 drop-shadow-md">
+                <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800">สมัครสมาชิก</h1>
+                <p class="text-gray-500 mt-2 text-sm md:text-base">เข้าร่วมระบบ Welloff System วันนี้</p>
+            </div>
             
-            <h1 class="text-2xl md:text-3xl font-extrabold text-gray-800">สมัครสมาชิก</h1>
-            <p class="text-gray-500 mt-2 text-sm md:text-base">เข้าร่วมระบบ Welloff System วันนี้</p>
-        </div>
-        
-        <form action="/api/register" method="POST" class="space-y-5">
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Username</label>
-                <input type="text" name="username" required 
-                    class="w-full bg-gray-50 border-gray-200 border p-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
-                    placeholder="ตั้งชื่อผู้ใช้งาน (ภาษาอังกฤษ/ตัวเลข)">
+            <form action="/api/register" method="POST" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Username (ชื่อผู้ใช้)</label>
+                    <input type="text" name="username" required 
+                        class="w-full bg-gray-50 border-gray-200 border p-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-base" 
+                        placeholder="ตั้งชื่อผู้ใช้งาน (อังกฤษ/ตัวเลข)">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+                    <input type="email" name="email" required 
+                        class="w-full bg-gray-50 border-gray-200 border p-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-base" 
+                        placeholder="example@mail.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1.5">Password (รหัสผ่าน)</label>
+                    <input type="password" name="password" required 
+                        class="w-full bg-gray-50 border-gray-200 border p-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition text-base" 
+                        placeholder="อย่างน้อย 6 ตัวอักษร">
+                </div>
+                <button type="submit" 
+                    class="w-full mt-4 bg-blue-600 text-white font-bold py-3.5 md:py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transform hover:-translate-y-1 transition duration-200 text-base">
+                    🚀 ยืนยันการสมัคร
+                </button>
+            </form>
+            
+            <div class="mt-8 text-center border-t border-gray-100 pt-6">
+                <p class="text-gray-500 text-sm">มีบัญชีอยู่แล้วใช่ไหม? 
+                    <a href="/login" class="text-blue-600 font-bold hover:underline">เข้าสู่ระบบที่นี่</a>
+                </p>
             </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
-                <input type="email" name="email" required 
-                    class="w-full bg-gray-50 border-gray-200 border p-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
-                    placeholder="example@mail.com">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
-                <input type="password" name="password" required 
-                    class="w-full bg-gray-50 border-gray-200 border p-3.5 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
-                    placeholder="ตั้งรหัสผ่าน (อย่างน้อย 6 ตัวอักษร)">
-            </div>
-            <button type="submit" 
-                class="w-full mt-4 bg-blue-600 text-white font-bold py-3.5 md:py-4 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transform hover:-translate-y-1 transition duration-200">
-                🚀 ยืนยันการสมัคร
-            </button>
-        </form>
-        
-        <div class="mt-8 text-center border-t border-gray-100 pt-6">
-            <p class="text-sm text-gray-600">มีบัญชีอยู่แล้ว? 
-                <a href="/login" class="text-blue-600 font-bold hover:text-blue-800 transition ml-1">เข้าสู่ระบบ</a>
-            </p>
         </div>
     </div>
-</div>
+</body>
+</html>

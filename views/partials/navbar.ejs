@@ -9,64 +9,62 @@
                 
                 <div class="hidden md:flex space-x-4 lg:space-x-6 items-center text-sm">
                     <a href="/home" class="hover:text-indigo-400 transition <%= (locals.page && page === 'home') ? 'text-indigo-400 font-bold' : '' %>">หน้าแรก</a>
-                    <a href="/" class="hover:text-indigo-400 transition">จัดการบอทเฟส</a>
-                    <a href="/line" class="hover:text-indigo-400 transition">จัดการบอทไลน์</a>
-                    <a href="/packages" class="hover:text-indigo-400 transition">แพ็คเกจ</a>
-                    <a href="/history" class="hover:text-indigo-400 transition">ประวัติ</a>
+                    <a href="/" class="hover:text-indigo-400 transition <%= (locals.page && page === 'facebook') ? 'text-indigo-400 font-bold' : '' %>">บอทเฟส</a>
+                    <a href="/line" class="hover:text-indigo-400 transition <%= (locals.page && page === 'line') ? 'text-indigo-400 font-bold' : '' %>">บอทไลน์</a>
+                    <a href="/packages" class="hover:text-indigo-400 transition <%= (locals.page && page === 'packages') ? 'text-indigo-400 font-bold' : '' %>">แพ็คเกจ</a>
+                    <a href="/history" class="hover:text-indigo-400 transition <%= (locals.page && page === 'history') ? 'text-indigo-400 font-bold' : '' %>">ประวัติ</a>
                     <a href="/guide" class="hover:text-indigo-400 transition <%= (locals.page && page === 'guide') ? 'text-indigo-400 font-bold' : '' %>">วิธีใช้งาน</a>
-
-<% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-    <a href="/admin/payments" class="text-yellow-400 hover:text-yellow-300 font-bold flex items-center transition">
-        <i class="fas fa-user-shield mr-1"></i> ตรวจสลิป
-    </a>
-<% } %>
                 </div>
             </div>
 
-            <div class="flex items-center bg-slate-800/40 rounded-2xl p-1.5 pr-2 border border-slate-700/50 transition-all hover:border-slate-600">
-    <div class="text-right mr-3 pl-3">
-        <p class="text-[8px] md:text-[9px] text-slate-400 uppercase tracking-widest leading-none mb-1">ยอดเงินคงเหลือ</p>
-        <p class="text-xs md:text-sm font-extrabold text-indigo-300 leading-none">
-            ฿<%= typeof user !== 'undefined' && user?.credits ? user.credits.toLocaleString() : '0' %>
-        </p>
-    </div>
-    
-    <a href="/topup" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 md:px-4 md:py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2 group">
-        <i class="fas fa-plus-circle text-[10px] transition-transform group-hover:rotate-90"></i>
-        <span>เติมเครดิต</span>
-    </a>
-</div>
+            <div class="flex items-center gap-3">
+                <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+                    <a href="/admin/payments" class="hidden sm:flex items-center py-2 px-3 rounded-lg bg-yellow-900/30 text-yellow-400 hover:bg-yellow-900/50 transition border border-yellow-900/50 font-bold text-xs">
+                        <i class="fas fa-user-shield mr-2"></i> ตรวจสลิป
+                    </a>
+                <% } %>
                 
-                <a href="/logout" class="hidden sm:block bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs font-bold transition border border-red-500/20">ออกจากระบบ</a>
-                
-                <button id="mobile-menu-button" class="md:hidden text-white hover:text-indigo-300 focus:outline-none transition p-1">
-                    <i class="fas fa-bars text-xl"></i>
+                <a href="/logout" class="hidden sm:block text-sm bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-lg transition font-bold">
+                    ออกจากระบบ
+                </a>
+
+                <button id="mobileMenuBtn" class="md:hidden text-gray-300 hover:text-white focus:outline-none text-2xl p-2">
+                    <i class="fas fa-bars"></i>
                 </button>
             </div>
         </div>
+    </div>
 
-        <div id="mobile-menu" class="hidden md:hidden mt-3 pb-2 space-y-2 border-t border-slate-800 pt-3 text-sm">
-            <a href="/home" class="block py-2.5 px-3 rounded-lg hover:bg-slate-800 hover:text-indigo-400 transition">หน้าแรก</a>
-            <a href="/" class="block py-2.5 px-3 rounded-lg hover:bg-slate-800 hover:text-indigo-400 transition">จัดการบอทเฟส</a>
-            <a href="/line" class="block py-2.5 px-3 rounded-lg hover:bg-slate-800 hover:text-indigo-400 transition">จัดการบอทไลน์</a>
-            <a href="/packages" class="block py-2.5 px-3 rounded-lg hover:bg-slate-800 hover:text-indigo-400 transition">แพ็คเกจ</a>
-            <a href="/history" class="block py-2.5 px-3 rounded-lg hover:bg-slate-800 hover:text-indigo-400 transition">ประวัติ</a>
-            <a href="/guide" class="block py-2.5 px-3 rounded-lg hover:bg-slate-800 hover:text-indigo-400 transition">วิธีใช้งาน</a>
-
-<% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
-    <a href="/admin/payments" class="block py-2.5 px-3 rounded-lg bg-yellow-900/30 text-yellow-400 hover:bg-yellow-900/50 transition border border-yellow-900/50 font-bold">
-        <i class="fas fa-user-shield mr-2"></i> ตรวจสลิป (Admin)
-    </a>
-<% } %>
-            <a href="/logout" class="block sm:hidden py-2.5 px-3 mt-3 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition border border-red-500/20 text-center font-bold">ออกจากระบบ</a>
-        </div>
+    <div id="mobileMenu" class="hidden md:hidden bg-slate-800 border-b border-slate-700 pb-4 pt-2 px-4 shadow-inner">
+        <a href="/home" class="block py-3 border-b border-slate-700/50 hover:text-indigo-400 transition"><i class="fas fa-home w-6"></i> หน้าแรก</a>
+        <a href="/" class="block py-3 border-b border-slate-700/50 hover:text-indigo-400 transition"><i class="fab fa-facebook w-6"></i> จัดการบอทเฟส</a>
+        <a href="/line" class="block py-3 border-b border-slate-700/50 hover:text-indigo-400 transition"><i class="fab fa-line w-6 text-green-400"></i> จัดการบอทไลน์</a>
+        <a href="/packages" class="block py-3 border-b border-slate-700/50 hover:text-indigo-400 transition"><i class="fas fa-box w-6"></i> แพ็คเกจ</a>
+        <a href="/history" class="block py-3 border-b border-slate-700/50 hover:text-indigo-400 transition"><i class="fas fa-history w-6"></i> ประวัติเติมเงิน</a>
+        <a href="/guide" class="block py-3 border-b border-slate-700/50 hover:text-indigo-400 transition"><i class="fas fa-book w-6"></i> วิธีใช้งาน</a>
+        
+        <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+            <a href="/admin/payments" class="block py-3 text-yellow-400 font-bold border-b border-slate-700/50"><i class="fas fa-user-shield w-6"></i> ตรวจสลิป (Admin)</a>
+        <% } %>
+        
+        <a href="/logout" class="block py-3 text-red-400 font-bold mt-2"><i class="fas fa-sign-out-alt w-6"></i> ออกจากระบบ</a>
     </div>
 </nav>
 
 <script>
-    // สคริปต์เปิด-ปิดเมนูในมือถือ
-    document.getElementById('mobile-menu-button').addEventListener('click', function() {
-        const menu = document.getElementById('mobile-menu');
-        menu.classList.toggle('hidden');
+    // สคริปต์สำหรับกดเปิด/ปิด เมนูมือถือ
+    document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+        const menu = document.getElementById('mobileMenu');
+        const icon = this.querySelector('i');
+        
+        if (menu.classList.contains('hidden')) {
+            menu.classList.remove('hidden');
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        } else {
+            menu.classList.add('hidden');
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
     });
 </script>

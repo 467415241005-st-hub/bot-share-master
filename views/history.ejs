@@ -1,38 +1,60 @@
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-<body class="bg-gray-50">
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ประวัติการเติมเครดิต - Welloff System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 pb-12 font-sans antialiased text-gray-900">
     <%- include('partials/navbar') %>
-    <div class="max-w-4xl mx-auto mt-6 md:mt-10 px-4 mb-10">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6">
-            <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-6">📋 ประวัติการเติมเครดิต</h1>
+    
+    <div class="max-w-4xl mx-auto mt-6 md:mt-10 px-4">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 md:p-8">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 flex items-center border-b pb-4">
+                <i class="fas fa-clipboard-list text-blue-500 mr-3"></i> ประวัติการเติมเครดิต
+            </h1>
             
             <div class="space-y-4">
-                <% if (payments.length === 0) { %>
-                    <p class="text-center text-gray-400 py-10">ยังไม่มีประวัติการเติมเงิน</p>
-                <% } %>
-
-                <% payments.forEach(p => { %>
-                    <div class="flex flex-row items-center justify-between p-4 border rounded-xl hover:bg-gray-50 transition">
-                        <div>
-                            <p class="font-bold text-blue-600 text-base md:text-lg">฿<%= p.amount.toLocaleString() %></p>
-                            <p class="text-[10px] md:text-xs text-gray-400"><%= p.createdAt.toLocaleString('th-TH') %></p>
+                <% if (typeof payments !== 'undefined' && payments.length > 0) { %>
+                    <% payments.forEach(p => { %>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 md:p-5 border border-gray-100 rounded-2xl hover:bg-gray-50 hover:border-blue-100 transition shadow-sm gap-4">
+                            
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-lg flex-shrink-0">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800 text-lg md:text-xl">฿<%= p.amount.toLocaleString() %></p>
+                                    <p class="text-xs md:text-sm text-gray-500 mt-0.5"><i class="far fa-clock mr-1"></i> <%= new Date(p.createdAt).toLocaleString('th-TH') %></p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between sm:justify-end gap-3 mt-1 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                                <a href="<%= p.slipUrl %>" target="_blank" class="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 font-bold transition flex items-center">
+                                    <i class="fas fa-image mr-1.5"></i> ดูสลิป
+                                </a>
+                                
+                                <% if (p.status === 'PENDING') { %>
+                                    <span class="bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap"><i class="fas fa-hourglass-half mr-1"></i> รอตรวจสอบ</span>
+                                <% } else if (p.status === 'APPROVED') { %>
+                                    <span class="bg-green-100 text-green-700 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap"><i class="fas fa-check-circle mr-1"></i> อนุมัติแล้ว</span>
+                                <% } else { %>
+                                    <span class="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap"><i class="fas fa-times-circle mr-1"></i> ไม่ผ่าน</span>
+                                <% } %>
+                            </div>
+                            
                         </div>
-                        
-                        <div class="text-right">
-                            <% if (p.status === 'PENDING') { %>
-                                <span class="bg-yellow-100 text-yellow-700 px-2 py-1 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold">⏳ รอตรวจสอบ</span>
-                            <% } else if (p.status === 'APPROVED') { %>
-                                <span class="bg-green-100 text-green-700 px-2 py-1 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold">✅ สำเร็จ</span>
-                            <% } else { %>
-                                <span class="bg-red-100 text-red-700 px-2 py-1 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold">❌ ไม่ผ่าน</span>
-                            <% } %>
-                            <a href="<%= p.slipUrl %>" target="_blank" class="block text-[10px] md:text-xs text-blue-400 mt-2 underline">ดูสลิปที่ส่ง</a>
-                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-receipt text-5xl mb-4 opacity-20 block"></i>
+                        <p class="text-sm md:text-base font-medium">ยังไม่มีประวัติการทำรายการเติมเครดิต</p>
                     </div>
-                <% }) %>
+                <% } %>
             </div>
         </div>
     </div>
 </body>
+</html>
