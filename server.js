@@ -50,6 +50,18 @@ const isLogin = (req, res, next) => { if (req.session.userId) return next(); res
 // ==========================================
 // ⭐ 2. AUTHENTICATION (เข้าสู่ระบบ / ออกจากระบบ)
 // ==========================================
+// หน้าเข้าสู่ระบบ
+app.get('/login', (req, res) => {
+    // ถ้ามี session (ล็อกอินแล้ว) ให้เด้งไปหน้าแรกเลย ไม่ต้องล็อกอินซ้ำ
+    if (req.session.userId) return res.redirect('/'); 
+    res.render('login');
+});
+
+// หน้าสมัครสมาชิก (เพราะในไฟล์ login.ejs ของคุณมีลิงก์ไป /register)
+app.get('/register', (req, res) => {
+    if (req.session.userId) return res.redirect('/');
+    res.render('register');
+});
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -242,24 +254,31 @@ app.get('/history', isLogin, async (req, res) => {
 });
 
 // Route สำหรับหน้าแรก (จัดการบอทเฟส) - รวมไว้ที่เดียวที่นี่
+// [ แก้ไข Route '/' ใน server.js ของคุณ ]
 app.get('/', isLogin, async (req, res) => {
     try {
-        // 1. ดึงข้อมูลบัญชีบอทเฟส
+        // ดึงข้อมูลบัญชีบอท
         const accounts = await prisma.botAccount.findMany({ 
             where: { userId: req.session.userId } 
         });
         
-        // 2. ดึงข้อมูลประวัติงาน (ป้องกัน Error: jobs is not defined)
+        // ดึงข้อมูลประวัติงาน (กำหนดให้เป็น [] หากหาไม่เจอ เพื่อป้องกัน error)
         const jobs = await prisma.jobQueue.findMany({ 
             where: { userId: req.session.userId }, 
-            orderBy: { id: 'desc' },
+            orderBy: { id: 'desc' }, 
             take: 10 
-        });
+        }) || [];
 
-        // 3. Render หน้า index โดยส่ง jobs ไปด้วย
-        res.render('index', { accounts, jobs, page: 'home', user: req.session.user });
+        // ส่งข้อมูลเข้าหน้า index.ejs โดยแน่ใจว่าตัวแปรทุกตัวมีค่า
+        res.render('index', { 
+            accounts: accounts || [], 
+            jobs: jobs, 
+            page: 'home', 
+            user: req.session.user || {} 
+        });
     } catch (error) {
-        res.status(500).send("Error loading dashboard: " + error.message);
+        console.error("Error at / route:", error);
+        res.status(500).send("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
     }
 });
 
