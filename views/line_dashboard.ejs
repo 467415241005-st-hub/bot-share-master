@@ -18,9 +18,57 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
             
             <div class="space-y-6">
-                
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 flex items-center text-green-600">
+                    <h2 class="text-lg font-bold mb-4 flex items-center text-green-600 border-b pb-3">
+                        <i class="fab fa-line mr-2 text-xl"></i> เพิ่มบัญชี LINE (ส่วนตัว)
+                    </h2>
+
+                    <form action="/api/line/add" method="POST" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ตั้งชื่อเรียกบัญชีนี้</label>
+                            <input type="text" name="groupName" required placeholder="เช่น ไลน์เครื่องหลัก" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base">
+                        </div>
+
+                        <div class="p-3 bg-green-50/50 border border-green-100 rounded-xl">
+                            <label class="block text-xs font-bold text-gray-600 mb-2">วิธีล็อกอินระบบบอท</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="loginType" value="CREDENTIALS" checked onchange="toggleLoginUI()" class="peer sr-only">
+                                    <div class="text-center py-2 bg-white border border-gray-200 rounded-lg peer-checked:bg-green-600 peer-checked:border-green-600 peer-checked:text-white font-bold transition text-xs shadow-sm">ใช้อีเมล LINE</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="loginType" value="COOKIE" onchange="toggleLoginUI()" class="peer sr-only">
+                                    <div class="text-center py-2 bg-white border border-gray-200 rounded-lg peer-checked:bg-green-600 peer-checked:border-green-600 peer-checked:text-white font-bold transition text-xs shadow-sm">ใช้ Cookie</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="emailLoginBox" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">อีเมลที่ผูกกับ LINE</label>
+                                <input type="email" name="lineEmail" required placeholder="example@mail.com" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">รหัสผ่าน LINE</label>
+                                <input type="password" name="linePassword" required placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base">
+                            </div>
+                            <p class="text-[10px] text-gray-500 text-center">* ระบบจะล็อกอินผ่านอีเมลให้อัตโนมัติ ปลอดภัย 100%</p>
+                        </div>
+
+                        <div id="cookieLoginBox" class="hidden">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">Cookies บัญชี LINE</label>
+                            <textarea name="cookies" placeholder='[{"name":"...", "value":"..."}]' class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none h-24 text-base"></textarea>
+                            <p class="text-[10px] text-red-500 mt-1">* สำหรับแอดมินหรือผู้ที่มีความเชี่ยวชาญเท่านั้น</p>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition shadow-md text-base">
+                            <i class="fas fa-save mr-1"></i> บันทึกบัญชี LINE
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg md:text-xl font-bold mb-4 flex items-center text-green-600 border-b pb-3">
                         <i class="fas fa-paper-plane mr-2"></i> สั่งงานบอท (LINE)
                     </h2>
                     
@@ -74,9 +122,16 @@
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อกลุ่มเป้าหมายไลน์ (สะกดให้ตรงเป๊ะ)</label>
-                            <input type="text" name="targetUrl" placeholder="เช่น กลุ่มแชร์ VIP ทองคำ" required class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base">
+                        <div class="p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl mb-4 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 bg-blue-200 text-blue-800 text-[10px] font-bold px-2 py-1 rounded-bl-lg">เป้าหมายหลัก</div>
+                            <label class="block text-sm font-extrabold text-blue-900 mb-1">
+                                <i class="fas fa-users text-blue-600 mr-1"></i> ชื่อกลุ่มแชร์เป้าหมาย
+                            </label>
+                            <input type="text" name="targetUrl" placeholder="เช่น กลุ่มแชร์ VIP (ต้องพิมพ์ให้ตรงเป๊ะ)" required 
+                                class="w-full bg-white border border-blue-300 p-3.5 rounded-xl focus:ring-4 focus:ring-blue-500/20 outline-none text-base font-bold text-blue-900 shadow-sm">
+                            <p class="text-xs text-blue-700 mt-2 font-medium">
+                                * แนะนำ: ให้กด <i class="far fa-copy mx-1"></i> คัดลอกชื่อกลุ่มจากในไลน์มาวาง เพื่อป้องกันการพิมพ์สัญลักษณ์ผิดพลาด
+                            </p>
                         </div>
 
                         <div>
@@ -103,6 +158,33 @@
 
             <div class="lg:col-span-2 space-y-6">
                 
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700">
+                        <i class="fas fa-user-circle mr-2 text-green-500"></i> บัญชี LINE ที่พร้อมใช้งาน
+                    </h2>
+                    <% if (lineAccounts.length === 0) { %>
+                        <p class="text-center py-6 text-gray-400">ยังไม่มีบัญชีไลน์ในระบบ</p>
+                    <% } else { %>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <% lineAccounts.forEach(acc => { %>
+                                <div class="border p-4 rounded-xl hover:border-green-400 transition bg-gray-50 shadow-sm flex flex-col justify-between h-full">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <div class="w-full overflow-hidden">
+                                            <p class="font-bold text-gray-800 text-base md:text-lg truncate"><i class="fab fa-line text-green-500 mr-1"></i> <%= acc.groupName %></p>
+                                        </div>
+                                        <span class="bg-green-100 text-green-700 text-[10px] px-2 py-1 rounded-full font-bold shadow-sm whitespace-nowrap">READY</span>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-gray-200 flex justify-end items-center">
+                                        <button onclick="deleteLineAccount('<%= acc.id %>')" class="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded-lg">
+                                            ลบบัญชี
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
                     <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700">
                         <i class="fas fa-history mr-2 text-green-500"></i> สถานะการทำงานล่าสุด (LINE)
@@ -183,6 +265,24 @@
     </div>
     
     <script>
+        function toggleLoginUI() {
+            const type = document.querySelector('input[name="loginType"]:checked').value;
+            const emailBox = document.getElementById('emailLoginBox');
+            const cookieBox = document.getElementById('cookieLoginBox');
+            
+            if (type === 'CREDENTIALS') {
+                emailBox.classList.remove('hidden');
+                cookieBox.classList.add('hidden');
+                document.getElementsByName('lineEmail')[0].required = true;
+                document.getElementsByName('linePassword')[0].required = true;
+            } else {
+                emailBox.classList.add('hidden');
+                cookieBox.classList.remove('hidden');
+                document.getElementsByName('lineEmail')[0].required = false;
+                document.getElementsByName('linePassword')[0].required = false;
+            }
+        }
+
         function toggleLineMode() {
             const mode = document.querySelector('input[name="mode"]:checked').value;
             const keywordBox = document.getElementById('lineKeywordBox');
@@ -192,6 +292,17 @@
             } else {
                 keywordBox.classList.add('hidden');
                 document.getElementsByName('keyword')[0].required = false;
+            }
+        }
+
+        async function deleteLineAccount(id) {
+            if(!confirm('ยืนยันว่าจะลบบัญชีนี้ออกจากระบบ?')) return;
+            try {
+                const res = await fetch(`/api/line/delete/${id}`, { method: 'DELETE' });
+                if(res.ok) location.reload();
+                else alert('ลบไม่ได้: ' + (await res.text()));
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
             }
         }
     </script>

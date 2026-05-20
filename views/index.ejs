@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* ล็อกไม่ให้ตัวหนังสือเพี้ยนบน iOS */
         input, textarea, select { font-size: 16px !important; }
     </style>
 </head>
@@ -38,12 +37,34 @@
             
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg font-bold mb-4 flex items-center text-blue-600 border-b pb-3">
+                        <i class="fab fa-facebook-square mr-2 text-xl"></i> เพิ่มบัญชีบอท Facebook
+                    </h2>
+                    
+                    <form action="/api/facebook/add" method="POST" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">อีเมล / เบอร์โทร (Facebook)</label>
+                            <input type="text" name="fbEmail" required placeholder="example@mail.com" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">รหัสผ่าน (Facebook)</label>
+                            <input type="password" name="fbPassword" required placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base">
+                        </div>
+                        <div class="hidden">
+                            <textarea name="cookies">[]</textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition shadow-md text-base">
+                            <i class="fas fa-plus-circle mr-1"></i> ผูกบัญชี Facebook
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
                     <h2 class="text-lg md:text-xl font-bold mb-5 flex items-center text-blue-600">
                         <i class="fas fa-paper-plane mr-2"></i> ตั้งค่าการส่งงาน
                     </h2>
                     
                     <form id="fbJobForm" action="/api/jobs/add" method="POST" class="space-y-5">
-                        
                         <div class="p-3.5 bg-gray-50 border border-gray-200 rounded-2xl">
                             <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">รูปแบบการทำงาน</label>
                             <div class="grid grid-cols-2 gap-2">
@@ -58,7 +79,7 @@
                             </div>
                         </div>
 
-                        <div id="keywordContainer" class="hidden animate-fade-in">
+                        <div id="keywordContainer" class="hidden">
                             <label class="block text-sm font-semibold text-red-600 mb-1">คีย์เวิร์ดดักจับจากท้าว</label>
                             <input type="text" name="keyword" placeholder="เช่น ตั้งค่า, วางเรท" class="w-full bg-red-50/50 border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-base">
                         </div>
@@ -87,7 +108,7 @@
                                 <option value="" disabled selected>-- เลือกบัญชีบอท --</option>
                                 <% if (accounts && accounts.length > 0) { %>
                                     <% accounts.forEach(acc => { %>
-                                        <option value="<%= acc.id %>"><%= acc.name || 'บอทเฟสบุ๊ก' %></option>
+                                        <option value="<%= acc.id %>"><%= acc.fbEmail %></option>
                                     <% }) %>
                                 <% } %>
                             </select>
@@ -104,7 +125,7 @@
                         </div>
 
                         <div id="timeContainer">
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">เวลาตั้งรันระบบ</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">เวลาตั้งรันระบบ (ถ้าตั้งเวลา)</label>
                             <input type="datetime-local" name="runAt" class="w-full border-gray-200 border p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base">
                         </div>
 
@@ -184,7 +205,7 @@
                                                 <% } else if (job.status === 'RUNNING') { %>
                                                     <span class="text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-lg"><i class="fas fa-spinner fa-spin mr-1"></i> รันระบบ</span>
                                                 <% } else if (job.status === 'FAILED') { %>
-                                                    <span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-lg"><i class="fas fa-times-circle mr-1"></i> พลั้งพลาด</span>
+                                                    <span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-lg"><i class="fas fa-times-circle mr-1"></i> ล้มเหลว</span>
                                                 <% } else { %>
                                                     <span class="text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded-lg"><i class="fas fa-clock mr-1"></i> รอคิว</span>
                                                 <% } %>
@@ -253,9 +274,10 @@
                 });
                 if(res.ok) {
                     showToast('ยิงส่งด่วนสำเร็จ!', 'ระบบคอมเมนต์ทำงานบอทเรียบร้อยแล้ว');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
                     const data = await res.json();
-                    showToast('เกิดข้อผิดพลาดหลังบ้าน', data.error || 'ไม่สามารถสั่งงานบอทได้', false);
+                    showToast('เกิดข้อผิดพลาด', data.error || 'ไม่สามารถสั่งงานบอทได้', false);
                 }
             } catch(err) {
                 showToast('การเชื่อมต่อล้มเหลว', 'ไม่สามารถติดต่อ Web Server ได้', false);
