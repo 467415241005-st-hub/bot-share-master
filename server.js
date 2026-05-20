@@ -253,23 +253,28 @@ app.get('/history', isLogin, async (req, res) => {
     res.render('history', { payments, page: 'history' });
 });
 
-// Route สำหรับหน้าแรก (จัดการบอทเฟส) - รวมไว้ที่เดียวที่นี่
-// [ แก้ไข Route '/' ใน server.js ของคุณ ]
+// Route สำหรับหน้าแรก (จัดการบอทเฟส)
 app.get('/', isLogin, async (req, res) => {
     try {
-        // ดึงข้อมูลบัญชีบอท
+        // 1. ดึงข้อมูลบัญชีบอทเฟสทั้งหมดของ User คนนี้
         const accounts = await prisma.botAccount.findMany({ 
             where: { userId: req.session.userId } 
         });
         
-        // ดึงข้อมูลประวัติงาน (กำหนดให้เป็น [] หากหาไม่เจอ เพื่อป้องกัน error)
+        // ดึงเอาเฉพาะ ID ของบัญชีเฟสบุ๊กมาใส่เป็น Array เพื่อเอาไปค้นหางาน
+        const accountIds = accounts.map(acc => acc.id);
+        
+        // 2. ดึงข้อมูลประวัติงาน (ค้นหาจาก accountId แทน userId)
         const jobs = await prisma.jobQueue.findMany({ 
-            where: { userId: req.session.userId }, 
+            where: { 
+                accountId: { in: accountIds },
+                platform: 'FACEBOOK'
+            }, 
             orderBy: { id: 'desc' }, 
             take: 10 
         }) || [];
 
-        // ส่งข้อมูลเข้าหน้า index.ejs โดยแน่ใจว่าตัวแปรทุกตัวมีค่า
+        // 3. ส่งข้อมูลเข้าหน้า index.ejs
         res.render('index', { 
             accounts: accounts || [], 
             jobs: jobs, 
