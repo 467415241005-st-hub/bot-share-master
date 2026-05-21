@@ -242,6 +242,31 @@ app.post('/api/jobs/send-now', isLogin, async (req, res) => {
     }
 });
 
+// 1. API ลบบัญชี Facebook
+app.delete('/api/facebook/delete/:id', isLogin, async (req, res) => {
+    try {
+        await prisma.botAccount.delete({ where: { id: parseInt(req.params.id) } });
+        res.send("OK");
+    } catch (error) {
+        res.status(500).send("Error deleting Facebook account");
+    }
+});
+
+// 2. API ล้างประวัติการทำงานของ Facebook
+app.delete('/api/jobs/clear/facebook', isLogin, async (req, res) => {
+    try {
+        const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
+        const accountIds = accounts.map(acc => acc.id);
+        
+        await prisma.jobQueue.deleteMany({
+            where: { accountId: { in: accountIds }, platform: 'FACEBOOK' }
+        });
+        res.send("OK");
+    } catch (error) {
+        res.status(500).send("Error clearing history");
+    }
+});
+
 // ==========================================
 // ⭐ 6. ROUTES
 // ==========================================

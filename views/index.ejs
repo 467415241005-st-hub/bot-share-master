@@ -142,9 +142,42 @@
             </div>
 
             <div class="lg:col-span-2 space-y-6">
+
+                <!-- เริ่ม: กล่องบัญชี Facebook ที่พร้อมใช้งาน -->
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700 flex items-center">
-                        <i class="fas fa-history mr-2 text-indigo-500"></i> ประวัติงานล่าสุด (Facebook)
+                    <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700 flex justify-between items-center">
+                        <span><i class="fas fa-user-circle mr-2 text-blue-500"></i> บัญชี Facebook ที่ผูกไว้</span>
+                    </h2>
+                    <% if (!accounts || accounts.length === 0) { %>
+                        <p class="text-center py-6 text-gray-400">ยังไม่มีบัญชี Facebook ในระบบ</p>
+                    <% } else { %>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <% accounts.forEach(acc => { %>
+                                <div class="border p-4 rounded-xl hover:border-blue-400 transition bg-gray-50 shadow-sm flex flex-col justify-between h-full">
+                                    <div class="flex justify-between items-start gap-2">
+                                        <div class="w-full overflow-hidden">
+                                            <p class="font-bold text-gray-800 text-base truncate"><i class="fab fa-facebook text-blue-600 mr-1"></i> <%= acc.fbEmail %></p>
+                                        </div>
+                                        <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-1 rounded-full font-bold shadow-sm whitespace-nowrap">READY</span>
+                                    </div>
+                                    <div class="mt-4 pt-3 border-t border-gray-200 flex justify-end items-center">
+                                        <button type="button" onclick="deleteFbAccount('<%= acc.id %>')" class="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded-lg transition">
+                                            <i class="fas fa-trash-alt mr-1"></i> ลบบัญชี
+                                        </button>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+                <!-- จบ: กล่องบัญชี Facebook ที่พร้อมใช้งาน -->
+
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700 flex justify-between items-center">
+                        <span><i class="fas fa-history mr-2 text-indigo-500"></i> ประวัติงานล่าสุด (Facebook)</span>
+                        <button type="button" onclick="clearFbHistory()" class="text-xs bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition font-bold border border-red-100 shadow-sm">
+                            <i class="fas fa-eraser mr-1"></i> ล้างประวัติ
+                        </button>
                     </h2>
 
                     <div class="block md:hidden space-y-4">
@@ -286,6 +319,34 @@
                 }
             } catch(err) {
                 showToast('การเชื่อมต่อล้มเหลว', 'ไม่สามารถติดต่อ Web Server ได้', false);
+            }
+        }
+
+        // ฟังก์ชันลบบัญชี FB
+        async function deleteFbAccount(id) {
+            if(!confirm('ยืนยันว่าจะลบบัญชี Facebook นี้ออกจากระบบ? (ข้อมูลงานที่ผูกไว้จะหายไปด้วย)')) return;
+            try {
+                const res = await fetch(`/api/facebook/delete/${id}`, { method: 'DELETE' });
+                if(res.ok) location.reload();
+                else alert('ไม่สามารถลบได้');
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            }
+        }
+
+        // ฟังก์ชันล้างประวัติการทำงาน FB
+        async function clearFbHistory() {
+            if(!confirm('ยืนยันล้างประวัติการทำงานทั้งหมดของ Facebook? (ไม่สามารถกู้คืนได้)')) return;
+            try {
+                const res = await fetch(`/api/jobs/clear/facebook`, { method: 'DELETE' });
+                if(res.ok) {
+                    showToast('สำเร็จ!', 'ล้างประวัติการทำงานเรียบร้อยแล้ว');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert('ไม่สามารถล้างประวัติได้');
+                }
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
             }
         }
     </script>
