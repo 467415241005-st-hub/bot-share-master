@@ -266,6 +266,11 @@
                 return showToast('กรอกข้อมูลไม่ครบ', 'โปรดเลือกบัญชีบอท ลิงก์ และข้อความคอมเมนต์ครับ', false);
             }
 
+            // เพิ่มการตรวจสอบความถูกต้องของ URL ป้องกันบอทเฟสบุ๊ค Error
+            if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+                return showToast('รูปแบบลิงก์ไม่ถูกต้อง', 'กรุณากรอกลิงก์ของกลุ่มหรือโพสต์ที่ขึ้นต้นด้วย http:// หรือ https:// ครับ', false);
+            }
+
             try {
                 const res = await fetch('/api/facebook/send-now', {
                     method: 'POST',
