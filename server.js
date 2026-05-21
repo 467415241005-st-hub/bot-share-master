@@ -267,6 +267,22 @@ app.delete('/api/jobs/clear/facebook', isLogin, async (req, res) => {
     }
 });
 
+// 3. API ล้างประวัติการทำงานของ LINE
+app.delete('/api/jobs/clear/line', isLogin, async (req, res) => {
+    try {
+        const lineAccounts = await prisma.lineAccount.findMany({ where: { userId: req.session.userId } });
+        const lineAccountIds = lineAccounts.map(acc => acc.id);
+        
+        await prisma.jobQueue.deleteMany({
+            where: { lineAccountId: { in: lineAccountIds }, platform: 'LINE' }
+        });
+        res.send("OK");
+    } catch (error) {
+        res.status(500).send("Error clearing LINE history");
+    }
+});
+
+
 // ==========================================
 // ⭐ 6. ROUTES
 // ==========================================
