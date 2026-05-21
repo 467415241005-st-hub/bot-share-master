@@ -342,4 +342,34 @@ app.get('/', isLogin, async (req, res) => {
     }
 });
 
+// ล้างประวัติ Facebook
+app.delete('/api/jobs/clear/facebook', isLogin, async (req, res) => {
+    try {
+        const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
+        const accountIds = accounts.map(acc => acc.id);
+        await prisma.jobQueue.deleteMany({
+            where: { accountId: { in: accountIds }, platform: 'FACEBOOK' }
+        });
+        res.status(200).send("OK"); // ตรวจสอบว่าส่งสถานะ 200 กลับมา
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error");
+    }
+});
+
+// ล้างประวัติ LINE
+app.delete('/api/jobs/clear/line', isLogin, async (req, res) => {
+    try {
+        const lineAccounts = await prisma.lineAccount.findMany({ where: { userId: req.session.userId } });
+        const lineAccountIds = lineAccounts.map(acc => acc.id);
+        await prisma.jobQueue.deleteMany({
+            where: { lineAccountId: { in: lineAccountIds }, platform: 'LINE' }
+        });
+        res.status(200).send("OK");
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error");
+    }
+});
+
 app.listen(PORT, () => console.log(`✅ Server is running on port ${PORT}`));
