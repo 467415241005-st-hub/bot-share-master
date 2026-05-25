@@ -42,10 +42,68 @@
                         </button>
                     </form>
                 </div>
+
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="text-lg md:text-xl font-bold mb-5 flex items-center text-green-600">
+                        <i class="fas fa-paper-plane mr-2"></i> ตั้งค่าการส่งงาน
+                    </h2>
+                    
+                    <form id="lineJobForm" class="space-y-5">
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">บัญชีที่จะใช้สั่งงาน</label>
+                            <% if (lineAccounts && lineAccounts.length > 0) { %>
+                                <div class="w-full border border-green-200 bg-green-50 px-4 py-3 rounded-xl shadow-sm flex items-center justify-between">
+                                    <span class="font-bold text-green-800"><i class="fab fa-line text-green-600 mr-2"></i> <%= lineAccounts[0].groupName %></span>
+                                    <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded font-bold">บัญชีหลัก</span>
+                                </div>
+                                <input type="hidden" name="lineAccountId" value="<%= lineAccounts[0].id %>">
+                            <% } else { %>
+                                <div class="w-full border border-red-200 bg-red-50 px-4 py-3 rounded-xl shadow-sm text-red-600 text-sm font-bold">
+                                    <i class="fas fa-exclamation-circle mr-1"></i> กรุณาเพิ่มบัญชี LINE ก่อนสั่งงาน
+                                </div>
+                                <input type="hidden" name="lineAccountId" value="">
+                            <% } %>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนข้อความที่ต้องการส่ง</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="repeat" value="1" checked class="peer sr-only">
+                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700 font-bold transition text-sm">1 ข้อความ</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="repeat" value="2" class="peer sr-only">
+                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700 font-bold transition text-sm">2 ข้อความ</div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="repeat" value="3" class="peer sr-only">
+                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700 font-bold transition text-sm">3 ข้อความ</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ไอดีกลุ่มเป้าหมาย (Group ID)</label>
+                            <input type="text" name="targetUrl" required placeholder="เช่น C1234567890abcdef..." class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base shadow-inner">
+                            <p class="text-xs text-red-500 mt-1">* กรอก Group ID ของกลุ่มไลน์ (ไม่ใช่ชื่อกลุ่ม)</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">ข้อความจองแชร์</label>
+                            <textarea name="message" required placeholder="พิมพ์ข้อความจอง เช่น จอง 1 ขา" rows="3" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-base shadow-inner"></textarea>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="button" onclick="sendLineNow()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">
+                                <i class="fas fa-bolt mr-1"></i> ยิงส่งด่วนทันที
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <div class="lg:col-span-2 space-y-6">
-                <!-- รายการบัญชี LINE -->
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
                     <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700">
                         <i class="fab fa-line mr-2 text-green-500"></i> บัญชี LINE ที่พร้อมใช้งาน
@@ -69,7 +127,6 @@
                     <% } %>
                 </div>
 
-                <!-- ตารางสถานะงานล่าสุด -->
                 <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
                     <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700 flex justify-between items-center">
                         <span><i class="fas fa-history mr-2 text-green-500"></i> สถานะการทำงานล่าสุด (LINE)</span>
@@ -91,7 +148,7 @@
                             <tbody class="divide-y divide-gray-50">
                                 <% if (typeof jobs !== 'undefined' && jobs.length > 0) { %>
                                     <% jobs.forEach(job => { %>
-                                        <tr class="hover:bg-green-50/30 transition">
+                                    <tr class="hover:bg-green-50/30 transition">
                                             <td class="px-5 py-4">
                                                 <div class="max-w-[200px] truncate font-bold text-gray-800" title="<%= job.targetUrl %>">
                                                     <%= job.targetUrl %>
@@ -119,7 +176,7 @@
                                                     <span class="inline-flex items-center gap-1 text-yellow-700 font-bold bg-yellow-100 px-2.5 py-1 rounded-lg"><i class="fas fa-clock"></i> รอคิว</span>
                                                 <% } %>
                                             </td>
-                                        </tr>
+                                    </tr>
                                     <% }) %>
                                 <% } else { %>
                                     <tr>
@@ -135,6 +192,39 @@
     </div>
 
     <script>
+        // 💡 สคริปต์สำหรับการส่งงานด่วน LINE
+        async function sendLineNow() {
+            const accountId = document.querySelector('input[name="lineAccountId"]').value;
+            const targetUrl = document.querySelector('input[name="targetUrl"]').value;
+            const message = document.querySelector('textarea[name="message"]').value;
+            const repeat = document.querySelector('input[name="repeat"]:checked').value;
+
+            if(!accountId) {
+                return alert('กรุณาเพิ่มบัญชี LINE ก่อนสั่งงานครับ');
+            }
+            if(!targetUrl || !message) {
+                return alert('โปรดใส่ Group ID และข้อความครับ');
+            }
+
+            try {
+                const res = await fetch('/api/line/send-now', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineAccountId: accountId, targetUrl, message, repeat })
+                });
+
+                if(res.ok) {
+                    alert('ส่งงานบอท LINE สำเร็จ!');
+                    location.reload();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'เกิดข้อผิดพลาดในการสั่งงาน');
+                }
+            } catch(err) {
+                alert('การเชื่อมต่อล้มเหลว');
+            }
+        }
+
         async function deleteLineAccount(id) {
             if(!confirm('ยืนยันว่าจะลบบัญชีนี้ออกจากระบบ?')) return;
             try {
