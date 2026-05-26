@@ -1,5 +1,4 @@
 // prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,23 +8,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. ตาราง User
 model User {
-  id         String   @id @default(uuid())
-  username   String   @unique
-  email      String   @unique
-  password   String
-  credits    Float    @default(0)
-  role       String   @default("USER") // USER หรือ ADMIN
-  lineLimit  Int      @default(1)
-  createdAt  DateTime @default(now())
+  id            String   @id @default(uuid())
+  username      String   @unique
+  email         String   @unique
+  password      String
+  credits       Float    @default(0)
+  role          String   @default("USER") // USER, ADMIN
+  packageStatus String   @default("FREE") // FREE (1 บัญชี), PAID (2 บัญชี)
+  createdAt     DateTime @default(now())
 
-  accounts   BotAccount[]
-  lineAccs   LineAccount[]
-  payments   Payment[]
+  accounts      BotAccount[]
+  lineAccs      LineAccount[]
+  payments      Payment[]
 }
 
-// 2. ตารางบัญชี Facebook
 model BotAccount {
   id         Int      @id @default(autoincrement())
   fbEmail    String   @unique
@@ -36,12 +33,11 @@ model BotAccount {
   jobs       JobQueue[]
 }
 
-// 3. ตารางบัญชี LINE ส่วนตัว (ระบบใหม่)
 model LineAccount {
   id           Int      @id @default(autoincrement())
   groupName    String   
   loginType    String   @default("COOKIE") 
-  lineEmail    String?  
+  lineEmail    String?
   linePassword String? 
   cookies      String?  @db.Text 
   userId       String
@@ -49,35 +45,33 @@ model LineAccount {
   jobs         JobQueue[]
 }
 
-// 4. ตารางคิวงานจองแชร์
 model JobQueue {
   id            Int      @id @default(autoincrement())
   targetUrl     String   
   message       String
-  status        String   @default("PENDING") 
+  status        String   @default("PENDING") // PENDING, RUNNING, SUCCESS, FAILED
   runAt         DateTime @default(now())
-  mode          String   @default("SCHEDULE") 
+  mode          String   @default("IMMEDIATE") // IMMEDIATE, SCHEDULE, KEYWORD
   keyword       String?
   repeat        Int      @default(1) 
   platform      String   @default("FACEBOOK") 
-  accountId     Int?     
+  
+  accountId     Int?
   lineAccountId Int?     
-  account       BotAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  account       BotAccount?  @relation(fields: [accountId], references: [id], onDelete: Cascade)
   lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id], onDelete: Cascade)
 }
 
-// 5. ตารางประวัติการเติมเงิน/ส่งสลิป
 model Payment {
   id        Int      @id @default(autoincrement())
   amount    Float
   slipUrl   String   
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status    String   @default("PENDING") 
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }
 
-// 6. ตารางจัดการ Session ของระบบล็อกอิน
 model Session {
   id        String   @id
   sid       String   @unique

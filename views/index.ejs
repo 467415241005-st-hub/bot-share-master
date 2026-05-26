@@ -2,331 +2,120 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard - Welloff System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Bot - Welloff</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        input, textarea, select { font-size: 16px !important; }
-    </style>
 </head>
 <body class="bg-gray-50 pb-12 font-sans antialiased text-gray-900">
-
     <%- include('partials/navbar') %>
 
-    <div id="toastNotification" class="fixed top-20 right-4 z-50 transform translate-x-full transition-transform duration-300 bg-white shadow-2xl rounded-2xl p-4 border border-gray-100 hidden max-w-sm w-full">
-        <div class="flex items-center space-x-3">
-            <div id="toastIcon" class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"></div>
-            <div>
-                <p id="toastTitle" class="font-bold text-gray-800 text-sm"></p>
-                <p id="toastMessage" class="text-xs text-gray-500 mt-0.5"></p>
-            </div>
-        </div>
-    </div>
-
     <div class="max-w-7xl mx-auto px-4 mt-6">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 md:p-8 rounded-3xl shadow-md flex flex-col sm:flex-row items-center text-center sm:text-left mb-6">
-            <div class="bg-white/10 p-4 rounded-2xl mb-4 sm:mb-0 sm:mr-6 text-4xl shadow-inner">🤖</div>
+        <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-md mb-6 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Welloff Facebook Control</h1>
-                <p class="opacity-80 text-xs md:text-sm mt-1 font-medium">ระบบตั้งค่าและสั่งงานบอทจองแชร์อัตโนมัติความเร็วสูง</p>
+                <h1 class="text-2xl font-extrabold">Welloff Facebook Bot</h1>
+                <p class="text-sm">สถานะแพ็กเกจ: <span class="font-bold text-yellow-300"><%= user.packageStatus %></span></p>
             </div>
+            <% if(user.packageStatus === 'FREE') { %>
+                <a href="/topup" class="bg-white text-blue-600 px-4 py-2 rounded-xl font-bold text-sm">อัปเกรด 150฿</a>
+            <% } %>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-            
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-1 space-y-6">
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold mb-4 flex items-center text-blue-600 border-b pb-3">
-                        <i class="fab fa-facebook-square mr-2 text-xl"></i> เพิ่มบัญชีบอท Facebook
-                    </h2>
-                    
-                    <form action="/api/facebook/add" method="POST" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">อีเมล / เบอร์โทร (Facebook)</label>
-                            <input type="text" name="fbEmail" required placeholder="example@mail.com" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">รหัสผ่าน (Facebook)</label>
-                            <input type="password" name="fbPassword" required placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base">
-                        </div>
-                        <div class="hidden">
-                            <textarea name="cookies">[]</textarea>
-                        </div>
-                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition shadow-md text-base">
-                            <i class="fas fa-plus-circle mr-1"></i> ผูกบัญชี Facebook
-                        </button>
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-blue-600 mb-4 border-b pb-2">ผูกบัญชี Facebook</h2>
+                    <form action="/api/facebook/add" method="POST" class="space-y-3">
+                        <input type="text" name="fbEmail" required placeholder="อีเมล/เบอร์" class="w-full border p-2 rounded-xl text-sm">
+                        <input type="password" name="fbPassword" required placeholder="รหัสผ่าน" class="w-full border p-2 rounded-xl text-sm">
+                        <button class="w-full bg-slate-800 text-white py-2 rounded-xl text-sm font-bold">เพิ่มบัญชี</button>
                     </form>
                 </div>
 
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-5 flex items-center text-blue-600">
-                        <i class="fas fa-paper-plane mr-2"></i> ตั้งค่าการส่งงาน
-                    </h2>
-                    
-                    <form id="fbJobForm" action="/api/jobs/add" method="POST" class="space-y-5">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-blue-600 mb-4 border-b pb-2">สั่งงานบอท</h2>
+                    <form id="fbJobForm" class="space-y-4">
+                        <input type="hidden" id="platform" value="FACEBOOK">
                         
-                        <!-- บังคับใช้บัญชีส่วนตัวบัญชีแรกอัตโนมัติ -->
-                        <div class="mb-4">
-                            <label class="block text-sm font-bold text-gray-700 mb-2">บัญชีที่จะใช้สั่งงาน</label>
-                            <% if (accounts && accounts.length > 0) { %>
-                                <div class="w-full border border-blue-200 bg-blue-50 px-4 py-3 rounded-xl shadow-sm flex items-center justify-between">
-                                    <span class="font-bold text-blue-800"><i class="fab fa-facebook text-blue-600 mr-2"></i> <%= accounts[0].fbEmail %></span>
-                                    <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded font-bold">บัญชีหลัก</span>
-                                </div>
-                                <input type="hidden" name="accountId" value="<%= accounts[0].id %>">
-                            <% } else { %>
-                                <div class="w-full border border-red-200 bg-red-50 px-4 py-3 rounded-xl shadow-sm text-red-600 text-sm font-bold">
-                                    <i class="fas fa-exclamation-circle mr-1"></i> กรุณาเพิ่มบัญชี Facebook ก่อนสั่งงาน
-                                </div>
-                                <input type="hidden" name="accountId" value="">
+                        <select id="accountId" class="w-full border p-3 rounded-xl font-bold">
+                            <% if(accounts.length > 0) { accounts.forEach(acc => { %>
+                                <option value="<%= acc.id %>"><%= acc.fbEmail %></option>
+                            <% }) } else { %>
+                                <option value="">กรุณาเพิ่มบัญชีเฟสบุ๊คก่อน</option>
                             <% } %>
+                        </select>
+
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer"><input type="radio" name="mode" value="IMMEDIATE" checked onchange="toggleMode()" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-blue-600 peer-checked:text-white text-xs font-bold">ด่วน</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="mode" value="SCHEDULE" onchange="toggleMode()" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-blue-600 peer-checked:text-white text-xs font-bold">ตั้งเวลา</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="mode" value="KEYWORD" onchange="toggleMode()" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-blue-600 peer-checked:text-white text-xs font-bold">คีย์เวิร์ด</div></label>
                         </div>
 
-                        <div class="p-3.5 bg-gray-50 border border-gray-200 rounded-2xl">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">รูปแบบการทำงาน</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="mode" value="SCHEDULE" checked onchange="toggleMode()" class="peer sr-only">
-                                    <div class="text-center py-2.5 bg-white border border-gray-200 rounded-xl peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white font-bold transition text-sm text-gray-600 shadow-sm">⏰ ตั้งเวลาส่ง</div>
-                                </label>
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="mode" value="KEYWORD" onchange="toggleMode()" class="peer sr-only">
-                                    <div class="text-center py-2.5 bg-white border border-gray-200 rounded-xl peer-checked:bg-blue-600 peer-checked:border-blue-600 peer-checked:text-white font-bold transition text-sm text-gray-600 shadow-sm">👀 จับคีย์เวิร์ด</div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div id="keywordContainer" class="hidden">
-                            <label class="block text-sm font-semibold text-red-600 mb-1">คีย์เวิร์ดดักจับจากท้าว</label>
-                            <input type="text" name="keyword" placeholder="เช่น ตั้งค่า, วางเรท" class="w-full bg-red-50/50 border border-red-200 p-3 rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-base">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนข้อความที่ต้องการส่ง</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="repeat" value="1" checked class="peer sr-only">
-                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-bold transition text-sm">1 ข้อความ</div>
-                                </label>
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="repeat" value="2" class="peer sr-only">
-                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-bold transition text-sm">2 ข้อความ</div>
-                                </label>
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="repeat" value="3" class="peer sr-only">
-                                    <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 font-bold transition text-sm">3 ข้อความ</div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ลิงก์โพสต์เป้าหมาย (URL)</label>
-                            <input type="url" name="targetUrl" required placeholder="https://www.facebook.com/..." class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base shadow-inner">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ข้อความคอมเมนต์จองแชร์</label>
-                            <textarea name="message" required placeholder="พิมพ์ข้อความจอง เช่น จอง 1 ขาครับ" rows="3" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-base shadow-inner"></textarea>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3 pt-2">
-                            <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition text-sm border shadow-sm">
-                                <i class="fas fa-calendar-alt mr-1"></i> บันทึกตารางงาน
-                            </button>
-                            <button type="button" onclick="sendNow()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition text-sm shadow-md">
-                                <i class="fas fa-bolt mr-1"></i> ยิงส่งด่วนทันที
-                            </button>
-                        </div>
+                        <input type="datetime-local" id="scheduleTime" class="w-full border p-2 rounded-xl text-sm hidden">
+                        <input type="text" id="keyword" placeholder="คำที่ต้องการดัก (เช่น เรท)" class="w-full border p-2 rounded-xl text-sm hidden">
+                        
+                        <input type="url" id="targetUrl" required placeholder="ลิงก์โพสต์เป้าหมาย" class="w-full border p-3 rounded-xl text-sm">
+                        <textarea id="message" required placeholder="ข้อความจอง" class="w-full border p-3 rounded-xl text-sm"></textarea>
+                        
+                        <button type="button" onclick="submitJob()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl">ส่งงาน</button>
                     </form>
                 </div>
             </div>
 
             <div class="lg:col-span-2 space-y-6">
-                <!-- ผูกบัญชี Facebook รายการที่ผูกไว้ -->
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700">
-                        <i class="fas fa-user-circle mr-2 text-blue-500"></i> บัญชี Facebook ที่ผูกไว้
-                    </h2>
-                    <% if (!accounts || accounts.length === 0) { %>
-                        <p class="text-center py-6 text-gray-400">ยังไม่มีบัญชี Facebook ในระบบ</p>
-                    <% } else { %>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <% accounts.forEach(acc => { %>
-                                <div class="border p-4 rounded-xl hover:border-blue-400 transition bg-gray-50 shadow-sm flex flex-col justify-between h-full">
-                                    <div class="flex justify-between items-start gap-2">
-                                        <div class="w-full overflow-hidden">
-                                            <p class="font-bold text-gray-800 text-base truncate"><i class="fab fa-facebook text-blue-600 mr-1"></i> <%= acc.fbEmail %></p>
-                                        </div>
-                                        <span class="bg-blue-100 text-blue-700 text-[10px] px-2 py-1 rounded-full font-bold shadow-sm whitespace-nowrap">READY</span>
-                                    </div>
-                                    <div class="mt-4 pt-3 border-t border-gray-200 flex justify-end items-center">
-                                        <button type="button" onclick="deleteFbAccount('<%= acc.id %>')" class="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-3 py-1 rounded-lg transition">
-                                            <i class="fas fa-trash-alt mr-1"></i> ลบบัญชี
-                                        </button>
-                                    </div>
-                                </div>
-                            <% }) %>
-                        </div>
-                    <% } %>
-                </div>
-
-                <!-- ประวัติงานล่าสุด -->
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-4 border-b pb-3 text-gray-700 flex justify-between items-center">
-                        <span><i class="fas fa-history mr-2 text-indigo-500"></i> ประวัติงานล่าสุด (Facebook)</span>
-                        <button type="button" onclick="clearFbHistory()" class="text-xs bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition font-bold border border-red-100 shadow-sm">
-                            <i class="fas fa-eraser mr-1"></i> ล้างประวัติ
-                        </button>
-                    </h2>
-                    
-                    <div class="hidden md:block overflow-x-auto rounded-xl border border-gray-100 shadow-sm mt-4">
-                        <table class="w-full text-sm text-left border-collapse">
-                            <thead class="bg-gray-100 text-gray-700">
-                                <tr>
-                                    <th class="px-5 py-4 font-bold border-b">ลิงก์เป้าหมาย</th>
-                                    <th class="px-5 py-4 font-bold border-b">ข้อความ</th>
-                                    <th class="px-5 py-4 font-bold border-b">รายละเอียดเวลา</th>
-                                    <th class="px-5 py-4 font-bold border-b">สถานะระบบ</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                <% if (typeof jobs !== 'undefined' && jobs.length > 0) { %>
-                                    <% jobs.forEach(job => { %>
-                                        <tr class="hover:bg-blue-50/30 transition">
-                                            <td class="px-5 py-4">
-                                                <div class="max-w-[200px] truncate">
-                                                    <a href="<%= job.targetUrl %>" target="_blank" title="<%= job.targetUrl %>" class="font-medium text-blue-600 hover:text-blue-800 hover:underline"><%= job.targetUrl %></a>
-                                                </div>
-                                            </td>
-                                            <td class="px-5 py-4">
-                                                <div class="max-w-[150px] truncate text-gray-700" title="<%= job.message %>"><%= job.message %></div>
-                                            </td>
-                                            <td class="px-5 py-4 text-xs text-gray-500 whitespace-nowrap">
-                                                <span class="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-md inline-block mb-1">
-                                                    <%= job.mode === 'KEYWORD' ? '👀 คีย์เวิร์ด' : '⏰ ตั้งเวลา' %>
-                                                </span><br>
-                                                <%= new Date(job.runAt).toLocaleString('th-TH') %>
-                                            </td>
-                                            <td class="px-5 py-4 whitespace-nowrap">
-                                                <% if (job.status === 'SUCCESS') { %>
-                                                    <span class="inline-flex items-center gap-1 text-green-700 font-bold bg-green-100 px-2.5 py-1 rounded-lg"><i class="fas fa-check-circle"></i> สำเร็จ</span>
-                                                <% } else if (job.status === 'RUNNING') { %>
-                                                    <span class="inline-flex items-center gap-1 text-blue-700 font-bold bg-blue-100 px-2.5 py-1 rounded-lg"><i class="fas fa-spinner fa-spin"></i> รันระบบ</span>
-                                                <% } else if (job.status === 'FAILED') { %>
-                                                    <span class="inline-flex items-center gap-1 text-red-700 font-bold bg-red-100 px-2.5 py-1 rounded-lg"><i class="fas fa-times-circle"></i> ล้มเหลว</span>
-                                                <% } else { %>
-                                                    <span class="inline-flex items-center gap-1 text-yellow-700 font-bold bg-yellow-100 px-2.5 py-1 rounded-lg"><i class="fas fa-clock"></i> รอคิว</span>
-                                                <% } %>
-                                            </td>
-                                        </tr>
-                                    <% }) %>
-                                <% } else { %>
-                                    <tr>
-                                        <td colspan="4" class="px-5 py-8 text-center text-gray-400">ยังไม่มีประวัติการทำงาน</td>
-                                    </tr>
-                                <% } %>
-                            </tbody>
-                        </table>
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <h2 class="font-bold text-gray-700">ประวัติงานล่าสุด</h2>
+                        <button onclick="clearHistory('facebook')" class="text-xs text-red-500">ล้างประวัติ</button>
                     </div>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50"><tr><th class="p-3">โหมด</th><th class="p-3">ข้อความ</th><th class="p-3">เวลาส่ง</th><th class="p-3">สถานะ</th></tr></thead>
+                        <tbody>
+                            <% jobs.forEach(job => { %>
+                                <tr class="border-b">
+                                    <td class="p-3 font-bold text-blue-600"><%= job.mode %></td>
+                                    <td class="p-3 truncate max-w-[150px]"><%= job.message %></td>
+                                    <td class="p-3 text-xs"><%= new Date(job.runAt).toLocaleString('th-TH') %></td>
+                                    <td class="p-3 font-bold"><%= job.status %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function showToast(title, message, isSuccess = true) {
-            const toast = document.getElementById('toastNotification');
-            const icon = document.getElementById('toastIcon');
-            document.getElementById('toastTitle').innerText = title;
-            document.getElementById('toastMessage').innerText = message;
-            
-            if (isSuccess) {
-                icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-green-500 text-white font-bold";
-                icon.innerHTML = "✓";
-            } else {
-                icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-red-500 text-white font-bold";
-                icon.innerHTML = "✕";
-            }
-            
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.remove('translate-x-full'), 50);
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-                setTimeout(() => toast.classList.add('hidden'), 300);
-            }, 3500);
-        }
-
         function toggleMode() {
             const mode = document.querySelector('input[name="mode"]:checked').value;
-            const container = document.getElementById('keywordContainer');
-            if (mode === 'KEYWORD') {
-                container.classList.remove('hidden');
-                document.getElementsByName('keyword')[0].required = true;
-            } else {
-                container.classList.add('hidden');
-                document.getElementsByName('keyword')[0].required = false;
-            }
+            document.getElementById('scheduleTime').classList.toggle('hidden', mode !== 'SCHEDULE');
+            document.getElementById('keyword').classList.toggle('hidden', mode !== 'KEYWORD');
         }
 
-        async function sendNow() {
-            const accountId = document.querySelector('input[name="accountId"]').value;
-            const targetUrl = document.querySelector('input[name="targetUrl"]').value;
-            const message = document.querySelector('textarea[name="message"]').value;
-            const repeat = document.querySelector('input[name="repeat"]:checked').value;
-
-            if(!accountId) {
-                return showToast('ไม่พบบัญชี', 'กรุณาผูกบัญชี Facebook ส่วนตัวก่อนส่งข้อความครับ', false);
-            }
-            if(!targetUrl || !message) {
-                return showToast('กรอกข้อมูลไม่ครบ', 'โปรดใส่ลิงก์ และข้อความคอมเมนต์ครับ', false);
-            }
-
-            if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-                return showToast('รูปแบบลิงก์ไม่ถูกต้อง', 'กรุณากรอกลิงก์ของกลุ่มหรือโพสต์ที่ขึ้นต้นด้วย http:// หรือ https:// ครับ', false);
-            }
-
-            try {
-                const res = await fetch('/api/facebook/send-now', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ accountId, targetUrl, message, repeat })
-                });
-                if(res.ok) {
-                    showToast('ยิงส่งด่วนสำเร็จ!', 'ระบบคอมเมนต์ทำงานบอทเรียบร้อยแล้ว');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    const data = await res.json();
-                    showToast('เกิดข้อผิดพลาด', data.error || 'ไม่สามารถสั่งงานบอทได้', false);
-                }
-            } catch(err) {
-                showToast('การเชื่อมต่อล้มเหลว', 'ไม่สามารถติดต่อ Web Server ได้', false);
-            }
+        async function submitJob() {
+            const data = {
+                platform: document.getElementById('platform').value,
+                accountId: document.getElementById('accountId').value,
+                mode: document.querySelector('input[name="mode"]:checked').value,
+                targetUrl: document.getElementById('targetUrl').value,
+                message: document.getElementById('message').value,
+                scheduleTime: document.getElementById('scheduleTime').value,
+                keyword: document.getElementById('keyword').value,
+                repeat: 1
+            };
+            if(!data.accountId) return alert('โปรดเพิ่มบัญชีก่อน');
+            
+            const res = await fetch('/api/jobs/send', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            if(res.ok) location.reload();
         }
 
-        async function deleteFbAccount(id) {
-            if(!confirm('ยืนยันว่าจะลบบัญชี Facebook นี้ออกจากระบบ?')) return;
-            try {
-                const res = await fetch(`/api/facebook/delete/${id}`, { method: 'DELETE' });
-                if(res.ok) location.reload();
-                else alert('ไม่สามารถลบได้');
-            } catch (err) {
-                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-            }
-        }
-
-        async function clearFbHistory() {
-            if(!confirm('ยืนยันล้างประวัติการทำงานทั้งหมดของ Facebook?')) return;
-            try {
-                const res = await fetch(`/api/jobs/clear/facebook`, { method: 'DELETE' });
-                if(res.ok) {
-                    showToast('สำเร็จ!', 'ล้างประวัติการทำงานเรียบร้อยแล้ว');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    alert('ไม่สามารถล้างประวัติได้');
-                }
-            } catch (err) {
-                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        async function clearHistory(platform) {
+            if(confirm('ล้างประวัติ?')) {
+                await fetch(`/api/jobs/clear/${platform}`, { method: 'DELETE' });
+                location.reload();
             }
         }
     </script>

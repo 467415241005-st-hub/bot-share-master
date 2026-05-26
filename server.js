@@ -3,317 +3,178 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const { runCommentBot } = require('./lib/bot-engine');
+const { runLinePersonalBot } = require('./lib/line-user-engine');
 const session = require('express-session');
 const { PrismaSessionStore } = require('@quixo3/prisma-session-store');
-const { runLinePersonalBot } = require('./lib/line-user-engine');
 const bcrypt = require('bcrypt');
-const multer = require('multer');
 const path = require('path');
-const axios = require('axios');
 
 const app = express();
 const prisma = global.prisma || new PrismaClient();
-if (process.env.NODE_ENV !== 'production') {
-    global.prisma = prisma;
-}
-const PORT = process.env.PORT || 3000;
+if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+const PORT = process.env.PORT || 80;
 
-// ==========================================
-// 1. CONFIG & MIDDLEWARE
-// ==========================================
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('trust proxy', 1);
 
 app.use(session({
-    secret: 'bot-share-master-secret-key',
+    secret: 'welloff-platform-secret',
     resave: false,
     saveUninitialized: false,
     store: new PrismaSessionStore(prisma, {
         checkPeriod: 2 * 60 * 1000,
         dbRecordIdIsSessionId: true,
-        dbRecordIdFunction: undefined,
     }),
     cookie: { maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Middleware ตรวจสอบการล็อกอิน
-const isLogin = (req, res, next) => {
+// --- Middleware ---
+const isLogin = async (req, res, next) => {
     if (req.session && req.session.userId) {
+        // อัปเดตข้อมูล user ล่าสุดเสมอ
+        req.session.user = await prisma.user.findUnique({ where: { id: req.session.userId } });
         return next();
     }
     res.redirect('/login');
 };
 
-// ==========================================
-// 2. AUTH & PAGES ROUTES
-// ==========================================
+// --- Auth Routes ---
 app.get('/login', (req, res) => res.render('login', { error: null }));
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await prisma.user.findUnique({ where: { username } });
     if (user && await bcrypt.compare(password, user.password)) {
         req.session.userId = user.id;
-        req.session.user = user;
         return res.redirect('/');
     }
     res.render('login', { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
 });
+app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login'); });
 
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/login');
-});
-
-app.get('/guide', isLogin, (req, res) => res.render('guide', { page: 'guide' }));
-app.get('/topup', isLogin, (req, res) => res.render('topup', { page: 'topup' }));
-
-app.get('/history', isLogin, async (req, res) => {
-    const payments = await prisma.payment.findMany({ 
-        where: { userId: req.session.userId }, 
-        orderBy: { id: 'desc' } 
-    });
-    res.render('history', { payments, page: 'history' });
-});
-
-app.get('/home', isLogin, (req, res) => {
-    res.render('home', { page: 'home', user: req.session.user || {} });
-});
-
-// หน้าหลัก Facebook Dashboard
+// --- Dashboard Routes ---
 app.get('/', isLogin, async (req, res) => {
-    try {
-        const accounts = await prisma.botAccount.findMany({ 
-            where: { userId: req.session.userId } 
-        });
-        const accountIds = accounts.map(acc => acc.id);
-        
-        const jobs = await prisma.jobQueue.findMany({ 
-            where: { 
-                accountId: { in: accountIds },
-                platform: 'FACEBOOK'
-            }, 
-            orderBy: { id: 'desc' }, 
-            take: 10 
-        }) || [];
-
-        res.render('index', { 
-            accounts: accounts || [], 
-            jobs: jobs, 
-            page: 'facebook', 
-            user: req.session.user || {} 
-        });
-    } catch (error) {
-        console.error("Error at / route:", error);
-        res.status(500).send("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
-    }
+    const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
+    const jobs = await prisma.jobQueue.findMany({ 
+        where: { accountId: { in: accounts.map(a => a.id) }, platform: 'FACEBOOK' }, 
+        orderBy: { id: 'desc' }, take: 15 
+    });
+    res.render('index', { accounts, jobs, page: 'facebook', user: req.session.user });
 });
 
-// หน้าแดชบอร์ด LINE
 app.get('/line', isLogin, async (req, res) => {
-    try {
-        const lineAccounts = await prisma.lineAccount.findMany({
-            where: { userId: req.session.userId }
-        });
-        const lineAccountIds = lineAccounts.map(acc => acc.id);
-
-        const jobs = await prisma.jobQueue.findMany({
-            where: {
-                lineAccountId: { in: lineAccountIds },
-                platform: 'LINE'
-            },
-            orderBy: { id: 'desc' },
-            take: 10
-        }) || [];
-
-        res.render('line_dashboard', {
-            lineAccounts: lineAccounts || [],
-            jobs: jobs,
-            page: 'line',
-            user: req.session.user || {}
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).send("Error loading LINE dashboard");
-    }
+    const lineAccounts = await prisma.lineAccount.findMany({ where: { userId: req.session.userId } });
+    const jobs = await prisma.jobQueue.findMany({
+        where: { lineAccountId: { in: lineAccounts.map(a => a.id) }, platform: 'LINE' },
+        orderBy: { id: 'desc' }, take: 15
+    });
+    res.render('line_dashboard', { lineAccounts, jobs, page: 'line', user: req.session.user });
 });
 
-// ==========================================
-// 3. FACEBOOK & LINE API ACTIONS
-// ==========================================
+// --- API จัดการบัญชี (เช็คโควตา) ---
 app.post('/api/facebook/add', isLogin, async (req, res) => {
-    const { fbEmail, fbPassword, cookies } = req.body;
-    try {
-        await prisma.botAccount.create({
-            data: { fbEmail, fbPassword, cookies: cookies || "[]", userId: req.session.userId }
-        });
-        res.redirect('/');
-    } catch (err) {
-        res.status(500).send("Error adding Facebook account");
-    }
+    const { fbEmail, fbPassword } = req.body;
+    const user = req.session.user;
+    const limit = user.packageStatus === 'PAID' ? 2 : 1;
+    
+    const count = await prisma.botAccount.count({ where: { userId: user.id } });
+    if (count >= limit) return res.send(`<script>alert('โควตา Facebook ของคุณเต็มแล้ว (สูงสุด ${limit} บัญชี)'); window.location.href='/';</script>`);
+
+    await prisma.botAccount.create({ data: { fbEmail, fbPassword, cookies: "[]", userId: user.id } });
+    res.redirect('/');
 });
 
-app.delete('/api/facebook/delete/:id', isLogin, async (req, res) => {
-    try {
-        await prisma.botAccount.delete({ where: { id: parseInt(req.params.id) } });
-        res.send("OK");
-    } catch (error) {
-        res.status(500).send("Error deleting Facebook account");
-    }
-});
-
-app.post('/api/jobs/add', isLogin, async (req, res) => {
-    const { accountId, targetUrl, message, mode, keyword, repeat } = req.body;
-    try {
-        await prisma.jobQueue.create({
-            data: {
-                targetUrl,
-                message,
-                mode: mode || 'SCHEDULE',
-                keyword: keyword || '',
-                repeat: parseInt(repeat) || 1,
-                platform: 'FACEBOOK',
-                accountId: parseInt(accountId)
-            }
-        });
-        res.redirect('/');
-    } catch (err) {
-        res.status(500).send("Error creating schedule job");
-    }
-});
-
-app.post('/api/facebook/send-now', isLogin, async (req, res) => {
-    const { accountId, targetUrl, message, repeat } = req.body;
-    try {
-        const account = await prisma.botAccount.findUnique({ where: { id: parseInt(accountId) } });
-        if (!account) return res.status(404).json({ error: "ไม่พบข้อมูลบัญชีบอท" });
-
-        // สร้าง Job ในระบบด้วยสถานะ RUNNING ทันที
-        const job = await prisma.jobQueue.create({
-            data: {
-                targetUrl,
-                message,
-                mode: 'IMMEDIATE',
-                repeat: parseInt(repeat) || 1,
-                platform: 'FACEBOOK',
-                accountId: account.id,
-                status: 'RUNNING'
-            },
-            include: { account: true }
-        });
-
-        // สั่งทำงานบอทแบบ Asynchronous (เบื้องหลัง) ไม่ต้องให้หน้าเว็บค้างรอโหลด
-        runCommentBot(job).then(async (finalStatus) => {
-            await prisma.jobQueue.update({
-                where: { id: job.id },
-                data: { status: finalStatus }
-            });
-        }).catch(async (err) => {
-            console.error(err);
-            await prisma.jobQueue.update({
-                where: { id: job.id },
-                data: { status: 'FAILED' }
-            });
-        });
-
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/api/jobs/clear/facebook', isLogin, async (req, res) => {
-    try {
-        const accounts = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
-        const accountIds = accounts.map(acc => acc.id);
-        await prisma.jobQueue.deleteMany({
-            where: { accountId: { in: accountIds }, platform: 'FACEBOOK' }
-        });
-        res.status(200).send("OK");
-    } catch (error) {
-        res.status(500).send("Error clearing Facebook history");
-    }
-});
-
-// LINE API ACTIONS
 app.post('/api/line/add', isLogin, async (req, res) => {
-    const { groupName, loginType, lineEmail, linePassword, cookies } = req.body;
-    try {
-        await prisma.lineAccount.create({
-            data: {
-                groupName,
-                loginType: loginType || 'COOKIE',
-                lineEmail: lineEmail || '',
-                linePassword: linePassword || '',
-                cookies: cookies || '[]',
-                userId: req.session.userId
-            }
-        });
-        res.redirect('/line');
-    } catch (err) {
-        res.status(500).send("Error adding LINE group configuration");
-    }
+    const { groupName, lineEmail, linePassword } = req.body;
+    const user = req.session.user;
+    const limit = user.packageStatus === 'PAID' ? 2 : 1;
+    
+    const count = await prisma.lineAccount.count({ where: { userId: user.id } });
+    if (count >= limit) return res.send(`<script>alert('โควตา LINE ของคุณเต็มแล้ว (สูงสุด ${limit} บัญชี)'); window.location.href='/line';</script>`);
+
+    await prisma.lineAccount.create({ data: { groupName, lineEmail, linePassword, userId: user.id } });
+    res.redirect('/line');
 });
 
-app.delete('/api/line/delete/:id', isLogin, async (req, res) => {
+// --- API ส่งงาน (ครอบคลุม ด่วน, ตั้งเวลา, คีย์เวิร์ด) ---
+app.post('/api/jobs/send', isLogin, async (req, res) => {
+    const { platform, accountId, targetUrl, message, repeat, mode, scheduleTime, keyword } = req.body;
+    
+    let runAt = new Date();
+    if (mode === 'SCHEDULE' && scheduleTime) runAt = new Date(scheduleTime);
+
     try {
-        await prisma.lineAccount.delete({ where: { id: parseInt(req.params.id) } });
-        res.send("OK");
-    } catch (error) {
-        res.status(500).send("Error deleting LINE account");
-    }
-});
+        const jobData = {
+            targetUrl, message, repeat: parseInt(repeat) || 1, platform,
+            mode: mode || 'IMMEDIATE', keyword: keyword || null, runAt,
+            status: mode === 'IMMEDIATE' ? 'RUNNING' : 'PENDING'
+        };
 
-app.post('/api/line/send-now', isLogin, async (req, res) => {
-    const { lineAccountId, targetUrl, message, repeat } = req.body;
-    try {
-        const job = await prisma.jobQueue.create({
-            data: {
-                targetUrl,
-                message,
-                mode: 'IMMEDIATE',
-                repeat: parseInt(repeat) || 1,
-                platform: 'LINE',
-                lineAccountId: parseInt(lineAccountId),
-                status: 'RUNNING'
-            }
-        });
+        if (platform === 'FACEBOOK') jobData.accountId = parseInt(accountId);
+        if (platform === 'LINE') jobData.lineAccountId = parseInt(accountId);
 
-        runLinePersonalBot(job).then(async (finalStatus) => {
-            await prisma.jobQueue.update({
-                where: { id: job.id },
-                data: { status: finalStatus }
+        const job = await prisma.jobQueue.create({ data: jobData, include: { account: true, lineAccount: true } });
+
+        // ถ้ายิงด่วน ให้รันทันที
+        if (mode === 'IMMEDIATE') {
+            const engine = platform === 'FACEBOOK' ? runCommentBot : runLinePersonalBot;
+            engine(job).then(async (status) => {
+                await prisma.jobQueue.update({ where: { id: job.id }, data: { status } });
+            }).catch(async () => {
+                await prisma.jobQueue.update({ where: { id: job.id }, data: { status: 'FAILED' } });
             });
-        }).catch(async () => {
-            await prisma.jobQueue.update({
-                where: { id: job.id },
-                data: { status: 'FAILED' }
-            });
-        });
-
-        res.json({ success: true });
+        }
+        res.json({ success: true, message: 'บันทึกคำสั่งงานเรียบร้อย' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-app.delete('/api/jobs/clear/line', isLogin, async (req, res) => {
-    try {
-        const lineAccounts = await prisma.lineAccount.findMany({ where: { userId: req.session.userId } });
-        const lineAccountIds = lineAccounts.map(acc => acc.id);
-        await prisma.jobQueue.deleteMany({
-            where: { lineAccountId: { in: lineAccountIds }, platform: 'LINE' }
-        });
-        res.status(200).send("OK");
-    } catch (error) {
-        res.status(500).send("Error clearing LINE history");
+// --- ระบบล้างประวัติ (Clear) ---
+app.delete('/api/jobs/clear/:platform', isLogin, async (req, res) => {
+    const platform = req.params.platform.toUpperCase();
+    if(platform === 'FACEBOOK') {
+        const accs = await prisma.botAccount.findMany({ where: { userId: req.session.userId } });
+        await prisma.jobQueue.deleteMany({ where: { accountId: { in: accs.map(a=>a.id) } } });
+    } else {
+        const accs = await prisma.lineAccount.findMany({ where: { userId: req.session.userId } });
+        await prisma.jobQueue.deleteMany({ where: { lineAccountId: { in: accs.map(a=>a.id) } } });
     }
+    res.send("OK");
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Server is running on port ${PORT}`);
-});
+// ==========================================
+// BACKGROUND WORKER (รันงานอัตโนมัติ)
+// ==========================================
+setInterval(async () => {
+    try {
+        const now = new Date();
+        // หางานตั้งเวลาที่ถึงเวลาแล้ว
+        const pendingJobs = await prisma.jobQueue.findMany({
+            where: { status: 'PENDING', mode: { in: ['SCHEDULE', 'KEYWORD'] }, runAt: { lte: now } },
+            include: { account: true, lineAccount: true }
+        });
+
+        for (const job of pendingJobs) {
+            // ล็อกสถานะป้องกันการรันซ้ำ
+            await prisma.jobQueue.update({ where: { id: job.id }, data: { status: 'RUNNING' } });
+            
+            const engine = job.platform === 'FACEBOOK' ? runCommentBot : runLinePersonalBot;
+            engine(job).then(async (status) => {
+                // ถ้าเป็น Keyword แล้วไม่เจอคำ ให้กลับไป PENDING รอเช็คใหม่รอบหน้า
+                if (job.mode === 'KEYWORD' && status === 'NOT_FOUND') {
+                    await prisma.jobQueue.update({ where: { id: job.id }, data: { status: 'PENDING', runAt: new Date(Date.now() + 60000) } });
+                } else {
+                    await prisma.jobQueue.update({ where: { id: job.id }, data: { status } });
+                }
+            }).catch(async () => {
+                await prisma.jobQueue.update({ where: { id: job.id }, data: { status: 'FAILED' } });
+            });
+        }
+    } catch (err) { console.error("Worker Error:", err); }
+}, 60000); // เช็คทุกๆ 1 นาที
+
+app.listen(PORT, () => { console.log(`✅ Welloff Platform running on port ${PORT}`); });
