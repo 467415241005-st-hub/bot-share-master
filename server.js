@@ -177,4 +177,19 @@ setInterval(async () => {
     } catch (err) { console.error("Worker Error:", err); }
 }, 60000); // เช็คทุกๆ 1 นาที
 
+// --- หน้าเพจอื่นๆ (เพิ่มตรงนี้เพื่อแก้ Cannot GET) ---
+app.get('/home', isLogin, (req, res) => res.render('home', { user: req.session.user, page: 'home' }));
+app.get('/packages', isLogin, (req, res) => res.render('packages', { user: req.session.user, page: 'packages' }));
+app.get('/guide', isLogin, (req, res) => res.render('guide', { user: req.session.user, page: 'guide' }));
+app.get('/topup', isLogin, (req, res) => res.render('topup', { user: req.session.user, page: 'topup' }));
+
+// หน้าประวัติเติมเงิน (ต้องดึงข้อมูล Payments จาก DB มาโชว์ด้วย)
+app.get('/history', isLogin, async (req, res) => {
+    const payments = await prisma.payment.findMany({ 
+        where: { userId: req.session.userId }, 
+        orderBy: { createdAt: 'desc' } 
+    });
+    res.render('history', { user: req.session.user, payments, page: 'history' });
+});
+
 app.listen(PORT, () => { console.log(`✅ Welloff Platform running on port ${PORT}`); });
