@@ -134,6 +134,32 @@ app.post('/api/jobs/send', isLogin, async (req, res) => {
     }
 });
 
+// --- เพิ่ม API ดึงกลุ่มเป้าหมาย ---
+app.post('/api/line/sync', async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Unauthorized' });
+    
+    const { accountId } = req.body;
+    try {
+        const account = await prisma.lineAccount.findUnique({ where: { id: parseInt(accountId) } });
+        if (!account) return res.json({ success: false, error: 'ไม่พบบัญชี' });
+
+        const result = await syncLineGroups(account); // เรียกบอทไปดึงกลุ่ม
+        
+        if (result.success) {
+            // เซฟกลุ่มที่ดึงได้ลง Database
+            await prisma.lineAccount.update({
+                where: { id: account.id },
+                data: { fetchedGroups: JSON.stringify(result.groups) }
+            });
+            res.json({ success: true, groups: result.groups });
+        } else {
+            res.json({ success: false, error: result.error });
+        }
+    } catch (error) {
+        res.json({ success: false, error: error.message });
+    }
+});
+
 // --- ระบบล้างประวัติ (Clear) ---
 app.delete('/api/jobs/clear/:platform', isLogin, async (req, res) => {
     const platform = req.params.platform.toUpperCase();

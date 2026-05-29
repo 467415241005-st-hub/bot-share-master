@@ -40,6 +40,7 @@ model LineAccount {
   lineEmail    String?
   linePassword String? 
   cookies      String?  @db.Text 
+  fetchedGroups String?  @db.Text
   userId       String
   user         User     @relation(fields: [userId], references: [id])
   jobs         JobQueue[]

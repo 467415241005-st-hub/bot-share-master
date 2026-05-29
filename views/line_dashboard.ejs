@@ -2,236 +2,242 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LINE Browser Bot - Welloff System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE Bot - Welloff</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        input, textarea, select { font-size: 16px !important; }
-        .gradient-green { background: linear-gradient(135deg, #22c55e 0%, #10b981 100%); }
-    </style>
 </head>
 <body class="bg-gray-50 pb-12 font-sans antialiased text-gray-900">
-
     <%- include('partials/navbar') %>
 
     <div class="max-w-7xl mx-auto px-4 mt-6">
-        <div class="gradient-green text-white p-6 md:p-8 rounded-3xl shadow-lg flex flex-col sm:flex-row items-center text-center sm:text-left mb-8">
-            <div class="bg-white/20 p-4 rounded-2xl mb-4 sm:mb-0 sm:mr-6 text-4xl shadow-inner">🟢</div>
+        <div class="bg-emerald-600 text-white p-6 rounded-3xl shadow-md mb-6 flex justify-between items-center">
             <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">LINE Browser Automation</h1>
-                <p class="opacity-90 text-xs md:text-sm mt-1 font-medium">ระบบบอทจองแชร์บัญชีส่วนตัว (ไม่ต้องใช้ Group ID)</p>
+                <h1 class="text-2xl font-extrabold">Welloff LINE Bot</h1>
+                <p class="text-sm">สถานะแพ็กเกจ: <span class="font-bold text-yellow-300"><%= user.packageStatus %></span></p>
             </div>
+            <% if(user.packageStatus === 'FREE') { %>
+                <a href="/topup" class="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm">อัปเกรด 150฿</a>
+            <% } %>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-            
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- ซ้าย: สั่งงาน -->
             <div class="lg:col-span-1 space-y-6">
-                
-                <div class="bg-amber-50 border-2 border-amber-200 p-5 rounded-3xl shadow-sm">
-                    <h3 class="text-amber-800 font-bold flex items-center mb-2">
-                        <i class="fas fa-key mr-2"></i> ตรวจสอบรหัส PIN
-                    </h3>
-                    <p class="text-xs text-amber-700 mb-4">หากรันครั้งแรกแล้วติดหน้ายืนยันตัวตน ให้กดดูรหัสที่นี่</p>
-                    <a href="/line-pin-code.png" target="_blank" class="block text-center bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-xl transition text-sm">
-                        <i class="fas fa-image mr-1"></i> ดูรูปภาพรหัส PIN
-                    </a>
-                </div>
 
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold mb-4 flex items-center text-emerald-600 border-b pb-3">
-                        <i class="fab fa-line mr-2 text-xl"></i> ผูกบัญชี LINE ส่วนตัว
-                    </h2>
-                    <form action="/api/line/add" method="POST" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อเรียกบัญชี</label>
-                            <input type="text" name="groupName" required placeholder="เช่น ไลน์เครื่องหลัก" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">อีเมล LINE</label>
-                            <input type="email" name="lineEmail" required placeholder="example@mail.com" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">รหัสผ่าน LINE</label>
-                            <input type="password" name="linePassword" required placeholder="••••••••" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
-                        </div>
-                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition shadow-md">
-                            <i class="fas fa-user-plus mr-1"></i> บันทึกข้อมูลบัญชี
-                        </button>
+                <!-- ฟอร์มเพิ่มบัญชี -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-emerald-600 mb-4 border-b pb-2"><i class="fab fa-line mr-1"></i> ผูกบัญชี LINE ส่วนตัว</h2>
+                    <form action="/api/line/add" method="POST" class="space-y-3">
+                        <input type="text" name="groupName" required placeholder="ชื่อเรียกบัญชี" class="w-full border p-2 rounded-xl text-sm outline-none">
+                        <input type="email" name="lineEmail" required placeholder="อีเมล LINE" class="w-full border p-2 rounded-xl text-sm outline-none">
+                        <input type="password" name="linePassword" required placeholder="รหัสผ่าน LINE" class="w-full border p-2 rounded-xl text-sm outline-none">
+                        <button class="w-full bg-slate-800 text-white py-2 rounded-xl text-sm font-bold">เพิ่มบัญชี LINE</button>
                     </form>
                 </div>
 
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg md:text-xl font-bold mb-5 flex items-center text-emerald-600 border-b pb-3">
-                        <i class="fas fa-paper-plane mr-2"></i> สั่งงานบอท LINE
-                    </h2>
-                    <form id="lineJobForm" class="space-y-5">
+                <!-- ฟอร์มสั่งงาน -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-emerald-600 mb-4 border-b pb-2"><i class="fas fa-paper-plane mr-1"></i> สั่งงานบอท LINE</h2>
+                    <form id="lineJobForm" class="space-y-4">
+                        <input type="hidden" id="platform" value="LINE">
+                        
+                        <!-- เลือกบัญชี & ปุ่มซิงค์กลุ่ม -->
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-2">บัญชีที่ใช้งาน</label>
-                            <% if (lineAccounts && lineAccounts.length > 0) { %>
-                                <select name="lineAccountId" class="w-full bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-emerald-800 font-bold outline-none">
-                                    <% lineAccounts.forEach(acc => { %>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">เลือกบัญชีที่ใช้งาน</label>
+                            <div class="flex gap-2">
+                                <select id="accountId" onchange="updateGroupDropdown()" class="w-full border p-3 rounded-xl font-bold text-sm bg-emerald-50 text-emerald-800">
+                                    <option value="">-- เลือกบัญชี --</option>
+                                    <% if(lineAccounts && lineAccounts.length > 0) { lineAccounts.forEach(acc => { %>
                                         <option value="<%= acc.id %>"><%= acc.groupName %></option>
-                                    <% }) %>
+                                    <% }) } %>
                                 </select>
-                            <% } else { %>
-                                <div class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs font-bold">
-                                    กรุณาเพิ่มบัญชี LINE ก่อนสั่งงาน
-                                </div>
-                            <% } %>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ชื่อกลุ่มเป้าหมาย (Search Name)</label>
-                            <input type="text" name="targetUrl" required placeholder="กรอกชื่อกลุ่ม เช่น บ้านมั่งคั่ง" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold">
-                            <p class="text-[10px] text-gray-500 mt-1 italic">* บอทจะทำการเสิร์ชหาชื่อกลุ่มนี้อัตโนมัติ</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">ข้อความจองแชร์</label>
-                            <textarea name="message" required placeholder="จอง 1 ขาครับ" rows="3" class="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none"></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">จำนวนข้อความ</label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <% [1, 2, 3].forEach(num => { %>
-                                    <label class="cursor-pointer">
-                                        <input type="radio" name="repeat" value="<%= num %>" <%= num === 1 ? 'checked' : '' %> class="peer sr-only">
-                                        <div class="text-center py-2 border-2 border-gray-100 rounded-xl peer-checked:bg-emerald-50 peer-checked:border-emerald-500 peer-checked:text-emerald-700 font-bold transition text-sm">
-                                            <%= num %> รอบ
-                                        </div>
-                                    </label>
-                                <% }) %>
+                                <button type="button" onclick="syncGroups()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 rounded-xl text-xs font-bold whitespace-nowrap shadow-sm transition">
+                                    <i class="fas fa-sync-alt mr-1"></i> ดึงกลุ่ม
+                                </button>
                             </div>
                         </div>
 
-                        <button type="button" onclick="sendLineNow()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 rounded-2xl transition shadow-lg text-lg">
-                            <i class="fas fa-bolt mr-2"></i> ยิงส่งด่วนทันที
+                        <!-- 💡 ระบบใหม่: Dropdown เลือกกลุ่มเป้าหมายแทนการพิมพ์ -->
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">เลือกกลุ่มเป้าหมาย (รายชื่อกลุ่ม)</label>
+                            <select id="targetUrl" required class="w-full border p-3 rounded-xl text-sm outline-none font-bold">
+                                <option value="">โปรดเลือกบัญชีและกด 'ดึงกลุ่ม' ก่อน</option>
+                            </select>
+                        </div>
+
+                        <!-- โหมดการทำงาน -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer"><input type="radio" name="mode" value="IMMEDIATE" checked onchange="toggleMode()" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-emerald-600 peer-checked:text-white text-xs font-bold">ด่วน</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="mode" value="SCHEDULE" onchange="toggleMode()" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-emerald-600 peer-checked:text-white text-xs font-bold">ตั้งเวลา</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="mode" value="KEYWORD" onchange="toggleMode()" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-emerald-600 peer-checked:text-white text-xs font-bold">คีย์เวิร์ด</div></label>
+                        </div>
+
+                        <input type="datetime-local" id="scheduleTime" class="w-full border p-2 rounded-xl text-sm hidden">
+                        <input type="text" id="keyword" placeholder="คำดักจับ (เช่น เรท)" class="w-full border p-2 rounded-xl text-sm hidden">
+                        
+                        <textarea id="message" required placeholder="ข้อความจองแชร์" rows="2" class="w-full border p-3 rounded-xl text-sm outline-none"></textarea>
+                        
+                        <!-- จำนวนรอบ -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <label class="cursor-pointer"><input type="radio" name="repeat" value="1" checked class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-emerald-100 peer-checked:border-emerald-500 peer-checked:text-emerald-700 text-xs font-bold">1 รอบ</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="repeat" value="2" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-emerald-100 peer-checked:border-emerald-500 peer-checked:text-emerald-700 text-xs font-bold">2 รอบ</div></label>
+                            <label class="cursor-pointer"><input type="radio" name="repeat" value="3" class="peer sr-only"><div class="text-center py-2 border rounded-xl peer-checked:bg-emerald-100 peer-checked:border-emerald-500 peer-checked:text-emerald-700 text-xs font-bold">3 รอบ</div></label>
+                        </div>
+
+                        <button type="button" onclick="submitJob()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition shadow-md">
+                            ยิงส่งงานบอท
                         </button>
                     </form>
                 </div>
             </div>
 
+            <!-- ขวา: บัญชีและประวัติ -->
             <div class="lg:col-span-2 space-y-6">
-                
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-3 text-gray-700 flex items-center">
-                        <i class="fas fa-id-card mr-2 text-emerald-500"></i> บัญชีที่เชื่อมต่อไว้
-                    </h2>
-                    <% if (!lineAccounts || lineAccounts.length === 0) { %>
-                        <p class="text-center py-8 text-gray-400">ยังไม่มีบัญชีที่ผูกไว้</p>
-                    <% } else { %>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <% lineAccounts.forEach(acc => { %>
-                                <div class="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex justify-between items-center shadow-sm">
-                                    <div>
-                                        <p class="font-bold text-gray-800"><%= acc.groupName %></p>
-                                        <p class="text-[10px] text-gray-500"><%= acc.lineEmail %></p>
-                                    </div>
-                                    <button onclick="deleteLineAccount('<%= acc.id %>')" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white p-2 px-3 rounded-lg transition text-xs font-bold">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
+                <!-- รายการบัญชี -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-gray-700 border-b pb-3 mb-4"><i class="fas fa-id-card mr-2 text-emerald-500"></i> บัญชีที่เชื่อมต่อไว้</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <% if(lineAccounts && lineAccounts.length > 0) { lineAccounts.forEach(acc => { %>
+                            <div class="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-gray-800 text-sm"><%= acc.groupName %></p>
+                                    <p class="text-[10px] text-gray-500"><%= acc.lineEmail %></p>
                                 </div>
-                            <% }) %>
-                        </div>
-                    <% } %>
+                                <button onclick="deleteLineAccount('<%= acc.id %>')" class="text-red-500 text-xs font-bold px-2"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        <% }) } else { %>
+                            <p class="text-sm text-gray-400">ยังไม่มีบัญชี</p>
+                        <% } %>
+                    </div>
                 </div>
 
-                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-gray-100">
+                <!-- ประวัติงาน -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
                     <div class="flex justify-between items-center border-b pb-3 mb-4">
-                        <h2 class="text-lg font-bold text-gray-700">
-                            <i class="fas fa-clock-rotate-left mr-2 text-indigo-500"></i> ประวัติการส่งงานล่าสุด
-                        </h2>
-                        <button onclick="clearLineHistory()" class="text-[10px] font-bold text-red-400 hover:text-red-600">ล้างประวัติ</button>
+                        <h2 class="font-bold text-gray-700">ประวัติงานล่าสุด</h2>
+                        <button onclick="clearHistory('line')" class="text-xs text-red-500 font-bold hover:underline">ล้างประวัติ</button>
                     </div>
-
-                    <div class="overflow-x-auto rounded-2xl border border-gray-50 shadow-inner">
-                        <table class="w-full text-sm text-left">
-                            <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-widest">
-                                <tr>
-                                    <th class="px-5 py-4">ชื่อกลุ่ม</th>
-                                    <th class="px-5 py-4">ข้อความ</th>
-                                    <th class="px-5 py-4">สถานะ</th>
-                                    <th class="px-5 py-4">เวลา</th>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-xs text-gray-500"><tr><th class="p-3">โหมด</th><th class="p-3">กลุ่ม / ข้อความ</th><th class="p-3">เวลา</th><th class="p-3">สถานะ</th></tr></thead>
+                        <tbody>
+                            <% if (typeof jobs !== 'undefined' && jobs.length > 0) { jobs.forEach(job => { %>
+                                <tr class="border-b border-gray-50">
+                                    <td class="p-3 font-bold text-emerald-600 text-xs"><%= job.mode %></td>
+                                    <td class="p-3"><div class="font-bold text-xs truncate max-w-[150px]"><%= job.targetUrl %></div><div class="text-[10px] text-gray-500 truncate max-w-[150px]"><%= job.message %></div></td>
+                                    <td class="p-3 text-[10px] text-gray-500"><%= new Date(job.runAt).toLocaleString('th-TH') %></td>
+                                    <td class="p-3 font-bold text-[10px]"><%= job.status %></td>
                                 </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <% if (typeof jobs !== 'undefined' && jobs.length > 0) { %>
-                                    <% jobs.forEach(job => { %>
-                                        <tr class="hover:bg-emerald-50/20 transition">
-                                            <td class="px-5 py-4 font-bold text-emerald-700"><%= job.targetUrl %></td>
-                                            <td class="px-5 py-4 text-gray-500 truncate max-w-[120px]"><%= job.message %></td>
-                                            <td class="px-5 py-4">
-                                                <% if (job.status === 'SUCCESS') { %>
-                                                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded-md text-[10px] font-bold">สำเร็จ</span>
-                                                <% } else if (job.status === 'RUNNING') { %>
-                                                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-[10px] font-bold animate-pulse">กำลังรัน...</span>
-                                                <% } else if (job.status === 'FAILED') { %>
-                                                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded-md text-[10px] font-bold">ล้มเหลว</span>
-                                                <% } else { %>
-                                                    <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-[10px] font-bold text-center">รอคิว</span>
-                                                <% } %>
-                                            </td>
-                                            <td class="px-5 py-4 text-[10px] text-gray-400">
-                                                <%= new Date(job.runAt).toLocaleTimeString('th-TH') %>
-                                            </td>
-                                        </tr>
-                                    <% }) %>
-                                <% } else { %>
-                                    <tr><td colspan="4" class="py-10 text-center text-gray-300">ยังไม่มีข้อมูล</td></tr>
-                                <% } %>
-                            </tbody>
-                        </table>
-                    </div>
+                            <% }) } %>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- โค้ดส่งข้อมูลไป Backend -->
     <script>
-        async function sendLineNow() {
-            const accIdInput = document.querySelector('select[name="lineAccountId"]');
-            if (!accIdInput) return alert('กรุณาเพิ่มบัญชี LINE ก่อนครับ');
-            
-            const lineAccountId = accIdInput.value;
-            const targetUrl = document.querySelector('input[name="targetUrl"]').value;
-            const message = document.querySelector('textarea[name="message"]').value;
-            const repeat = document.querySelector('input[name="repeat"]:checked').value;
+        // ข้อมูลบัญชีที่ถูกเรนเดอร์มาจาก Backend
+        const accountsData = <%- JSON.stringify(lineAccounts || []) %>;
 
-            if(!targetUrl || !message) return alert('กรุณากรอกชื่อกลุ่มและข้อความครับ');
+        // อัปเดต Dropdown เมื่อเปลี่ยนบัญชี
+        function updateGroupDropdown() {
+            const accId = document.getElementById('accountId').value;
+            const targetSelect = document.getElementById('targetUrl');
+            targetSelect.innerHTML = '';
+
+            const acc = accountsData.find(a => a.id == accId);
+            if (acc && acc.fetchedGroups) {
+                try {
+                    const groups = JSON.parse(acc.fetchedGroups);
+                    if(groups.length > 0) {
+                        groups.forEach(g => {
+                            targetSelect.innerHTML += `<option value="${g}">${g}</option>`;
+                        });
+                    } else {
+                        targetSelect.innerHTML = '<option value="">ไม่พบกลุ่ม (ลองกดดึงกลุ่มอีกครั้ง)</option>';
+                    }
+                } catch(e) {
+                    targetSelect.innerHTML = '<option value="">ข้อมูลกลุ่มผิดพลาด กรุณากดดึงกลุ่มใหม่</option>';
+                }
+            } else {
+                targetSelect.innerHTML = '<option value="">กรุณากดปุ่ม "ดึงกลุ่ม" ก่อนใช้งาน</option>';
+            }
+        }
+
+        // ฟังก์ชันสั่งบอทไปดึงกลุ่ม
+        async function syncGroups() {
+            const accId = document.getElementById('accountId').value;
+            if(!accId) return alert('โปรดเลือกบัญชีที่ต้องการดึงกลุ่มก่อนครับ');
+            
+            const btn = event.currentTarget;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังดึง...';
+            btn.disabled = true;
 
             try {
-                const res = await fetch('/api/line/send-now', {
+                const res = await fetch('/api/line/sync', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineAccountId, targetUrl, message, repeat })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ accountId: accId })
                 });
-                if(res.ok) {
-                    alert('ส่งคำสั่งไปที่เซิร์ฟเวอร์แล้ว! บอทกำลังเริ่มทำงาน...');
-                    location.reload();
+                const data = await res.json();
+                
+                if(data.success) {
+                    alert(`ดึงข้อมูลสำเร็จ พบ ${data.groups.length} กลุ่ม!`);
+                    location.reload(); // รีเฟรชหน้าเพื่อโหลดข้อมูลใหม่เข้า Dropdown
                 } else {
-                    const data = await res.json();
-                    alert(data.error || 'เกิดข้อผิดพลาด');
+                    alert('ดึงกลุ่มล้มเหลว: ' + data.error);
                 }
-            } catch(err) { alert('การเชื่อมต่อล้มเหลว'); }
+            } catch(e) {
+                alert('การเชื่อมต่อล้มเหลว');
+            } finally {
+                btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> ดึงกลุ่ม';
+                btn.disabled = false;
+            }
+        }
+
+        // ฟังก์ชันอื่นๆ เดิม
+        function toggleMode() {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            document.getElementById('scheduleTime').classList.toggle('hidden', mode !== 'SCHEDULE');
+            document.getElementById('keyword').classList.toggle('hidden', mode !== 'KEYWORD');
+        }
+
+        async function submitJob() {
+            const data = {
+                platform: 'LINE',
+                accountId: document.getElementById('accountId').value,
+                mode: document.querySelector('input[name="mode"]:checked').value,
+                targetUrl: document.getElementById('targetUrl').value, // ตอนนี้มันคือ Value จาก Dropdown
+                message: document.getElementById('message').value,
+                scheduleTime: document.getElementById('scheduleTime').value,
+                keyword: document.getElementById('keyword').value,
+                repeat: document.querySelector('input[name="repeat"]:checked').value
+            };
+            if(!data.accountId || !data.targetUrl) return alert('กรุณาเลือกบัญชีและกลุ่มเป้าหมายให้ครบถ้วน');
+            
+            const res = await fetch('/api/jobs/send', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            if(res.ok) location.reload();
         }
 
         async function deleteLineAccount(id) {
-            if(!confirm('ยืนยันลบบัญชีนี้ออกจากระบบ?')) return;
-            try {
-                const res = await fetch(`/api/line/delete/${id}`, { method: 'DELETE' });
-                if(res.ok) location.reload();
-            } catch (err) { alert('เกิดข้อผิดพลาด'); }
+            if(confirm('ยืนยันลบบัญชี?')) {
+                await fetch(`/api/line/delete/${id}`, { method: 'DELETE' });
+                location.reload();
+            }
+        }
+        async function clearHistory(platform) {
+            if(confirm('ล้างประวัติ?')) {
+                await fetch(`/api/jobs/clear/${platform}`, { method: 'DELETE' });
+                location.reload();
+            }
         }
 
-        async function clearLineHistory() {
-            if(!confirm('ล้างประวัติงานทั้งหมด?')) return;
-            try {
-                const res = await fetch(`/api/jobs/clear/line`, { method: 'DELETE' });
-                if(res.ok) location.reload();
-            } catch (err) { alert('เกิดข้อผิดพลาด'); }
-        }
+        // โหลด Dropdown ตอนเปิดหน้าเว็บครั้งแรก
+        window.onload = updateGroupDropdown;
     </script>
 </body>
 </html>
