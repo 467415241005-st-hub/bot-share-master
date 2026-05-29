@@ -120,7 +120,7 @@ app.post('/api/jobs/send', isLogin, async (req, res) => {
 
         // ถ้ายิงด่วน ให้รันทันที
         if (mode === 'IMMEDIATE') {
-            // ใน server.js ของพี่
+            const engine = platform === 'FACEBOOK' ? runCommentBot : runLinePersonalBot;
             engine(job).then(async (status) => {
                 await prisma.jobQueue.update({ where: { id: job.id }, data: { status } });
             }).catch(async (err) => {
