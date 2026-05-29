@@ -136,6 +136,26 @@
         </div>
     </div>
 
+    <!-- 💡 Modal หน้าต่างดูกล้องสด (Live View) สำหรับสแกน QR และดูรหัส PIN -->
+    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-all">
+        <div class="bg-white p-6 rounded-3xl max-w-md w-full text-center shadow-2xl mx-4">
+            <h3 class="font-extrabold text-xl text-emerald-600 mb-2"><i class="fas fa-qrcode mr-2"></i> สแกนเพื่อเข้าสู่ระบบ</h3>
+            <p class="text-sm text-gray-500 mb-4">ภาพจะอัปเดตอัตโนมัติ สแกน QR แล้วรอดูรหัส PIN ที่นี่...</p>
+            
+            <div class="bg-gray-50 border-2 border-dashed border-gray-200 p-2 rounded-2xl mb-5 flex justify-center min-h-[300px] items-center relative overflow-hidden">
+                <!-- รูประบบจะโหลดมาใส่ตรงนี้ -->
+                <img id="qrLiveImage" src="/line-qr-code.png" class="rounded-xl max-w-full object-contain z-10" style="max-height: 300px;" alt="กำลังรอภาพจากบอท...">
+                <div class="absolute inset-0 flex items-center justify-center z-0 text-gray-300">
+                    <i class="fas fa-circle-notch fa-spin text-4xl"></i>
+                </div>
+            </div>
+            
+            <button type="button" onclick="closeQrModal()" class="bg-slate-100 hover:bg-red-500 hover:text-white text-gray-600 px-4 py-3 rounded-xl text-sm font-bold w-full transition duration-300">
+                ยกเลิก / ปิดหน้าต่าง
+            </button>
+        </div>
+    </div>
+
     <!-- โค้ดส่งข้อมูลไป Backend -->
     <script>
         // ข้อมูลบัญชีที่ถูกเรนเดอร์มาจาก Backend
@@ -166,7 +186,16 @@
             }
         }
 
-        // ฟังก์ชันสั่งบอทไปดึงกลุ่ม
+        // 💡 ตัวแปรสำหรับเก็บคำสั่งรีเฟรชรูป
+        let liveImageInterval;
+
+        // 💡 ฟังก์ชันปิดหน้าต่างและหยุดการโหลดรูป
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+            clearInterval(liveImageInterval);
+        }
+
+        // 🟢 ฟังก์ชันสั่งบอทไปดึงกลุ่ม (อัปเดตแบบเปิดกล้องดูสด)
         async function syncGroups() {
             const accId = document.getElementById('accountId').value;
             if(!accId) return alert('โปรดเลือกบัญชีที่ต้องการดึงกลุ่มก่อนครับ');
@@ -175,7 +204,17 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> กำลังดึง...';
             btn.disabled = true;
 
+            // 1. เปิดกล่องหน้าต่าง Modal โชว์ขึ้นมากลางจอ
+            document.getElementById('qrModal').classList.remove('hidden');
+            
+            // 2. สั่งให้รูปภาพรีเฟรชตัวเองทุกๆ 2 วินาที (เปลี่ยนจาก QR เป็น PIN อัตโนมัติ)
+            liveImageInterval = setInterval(() => {
+                // ใส่ ?t=... ต่อท้าย เพื่อบังคับให้เบราว์เซอร์ไม่จำแคช และโหลดรูปใหม่ล่าสุดเสมอ
+                document.getElementById('qrLiveImage').src = '/line-qr-code.png?t=' + new Date().getTime();
+            }, 2000);
+
             try {
+                // ส่งคำสั่งไปให้บอทเริ่มทำงาน
                 const res = await fetch('/api/line/sync', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -183,14 +222,18 @@
                 });
                 const data = await res.json();
                 
+                // 3. พอบอททำงานเสร็จ (สแกนผ่าน หรือ Error) ให้ปิดหน้าต่างและหยุดรีเฟรชรูป
+                closeQrModal();
+
                 if(data.success) {
-                    alert(`ดึงข้อมูลสำเร็จ พบ ${data.groups.length} กลุ่ม!`);
-                    location.reload(); // รีเฟรชหน้าเพื่อโหลดข้อมูลใหม่เข้า Dropdown
+                    alert(`✅ ยืนยันสำเร็จ! ดึงข้อมูลมาได้ ${data.groups.length} กลุ่ม`);
+                    location.reload(); 
                 } else {
-                    alert('ดึงกลุ่มล้มเหลว: ' + data.error);
+                    alert('⚠️ แจ้งเตือน: ' + data.error);
                 }
             } catch(e) {
-                alert('การเชื่อมต่อล้มเหลว');
+                closeQrModal();
+                alert('❌ การเชื่อมต่อล้มเหลว');
             } finally {
                 btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> ดึงกลุ่ม';
                 btn.disabled = false;
@@ -209,7 +252,7 @@
                 platform: 'LINE',
                 accountId: document.getElementById('accountId').value,
                 mode: document.querySelector('input[name="mode"]:checked').value,
-                targetUrl: document.getElementById('targetUrl').value, // ตอนนี้มันคือ Value จาก Dropdown
+                targetUrl: document.getElementById('targetUrl').value, 
                 message: document.getElementById('message').value,
                 scheduleTime: document.getElementById('scheduleTime').value,
                 keyword: document.getElementById('keyword').value,
