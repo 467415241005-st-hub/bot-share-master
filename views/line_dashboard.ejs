@@ -122,11 +122,15 @@
                         <thead class="bg-gray-50 text-xs text-gray-500"><tr><th class="p-3">โหมด</th><th class="p-3">กลุ่ม / ข้อความ</th><th class="p-3">เวลา</th><th class="p-3">สถานะ</th></tr></thead>
                         <tbody>
                             <% if (typeof jobs !== 'undefined' && jobs.length > 0) { jobs.forEach(job => { %>
-                                <tr class="border-b border-gray-50">
+                                <tr class="border-b border-gray-50" data-job-id="<%= job.id %>" data-status="<%= job.status %>">
                                     <td class="p-3 font-bold text-emerald-600 text-xs"><%= job.mode %></td>
                                     <td class="p-3"><div class="font-bold text-xs truncate max-w-[150px]"><%= job.targetUrl %></div><div class="text-[10px] text-gray-500 truncate max-w-[150px]"><%= job.message %></div></td>
                                     <td class="p-3 text-[10px] text-gray-500"><%= new Date(job.runAt).toLocaleString('th-TH') %></td>
-                                    <td class="p-3 font-bold text-[10px]"><%= job.status %></td>
+                                    <td class="p-3">
+                                        <span class="status-badge font-bold text-[10px] <%= job.status === 'DONE' ? 'text-green-600' : job.status === 'FAILED' ? 'text-red-500' : job.status === 'RUNNING' ? 'text-emerald-500' : 'text-gray-500' %>">
+                                            <%= job.status %>
+                                        </span>
+                                    </td>
                                 </tr>
                             <% }) } %>
                         </tbody>
@@ -173,7 +177,18 @@
                     const groups = JSON.parse(acc.fetchedGroups);
                     if(groups.length > 0) {
                         groups.forEach(g => {
-                            targetSelect.innerHTML += `<option value="${g}">${g}</option>`;
+                            // รองรับทั้งแบบ string (เก็บแค่ ID) และ object {id, name}
+                            if (typeof g === 'object' && g !== null) {
+                                const opt = document.createElement('option');
+                                opt.value = g.id || g;
+                                opt.textContent = g.name ? `${g.name} (${g.id})` : g.id;
+                                targetSelect.appendChild(opt);
+                            } else {
+                                const opt = document.createElement('option');
+                                opt.value = g;
+                                opt.textContent = g;
+                                targetSelect.appendChild(opt);
+                            }
                         });
                     } else {
                         targetSelect.innerHTML = '<option value="">ไม่พบกลุ่ม (ลองกดดึงกลุ่มอีกครั้ง)</option>';
@@ -267,9 +282,10 @@
         }
 
         async function deleteLineAccount(id) {
-            if(confirm('ยืนยันลบบัญชี?')) {
-                await fetch(`/api/line/delete/${id}`, { method: 'DELETE' });
-                location.reload();
+            if(confirm('ยืนยันลบบัญชี? ประวัติงานของบัญชีนี้จะถูกลบด้วย')) {
+                const res = await fetch(`/api/line/delete/${id}`, { method: 'DELETE' });
+                if(res.ok) location.reload();
+                else alert('ลบไม่สำเร็จ');
             }
         }
         async function clearHistory(platform) {
@@ -278,6 +294,32 @@
                 location.reload();
             }
         }
+
+        // Auto-refresh สถานะงานที่กำลัง RUNNING ทุก 5 วินาที
+        async function refreshRunningJobs() {
+            const runningRows = document.querySelectorAll('[data-job-id][data-status="RUNNING"]');
+            if (runningRows.length === 0) return;
+            
+            const res = await fetch('/api/jobs/status');
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            runningRows.forEach(row => {
+                const jobId = parseInt(row.dataset.jobId);
+                const job = data.jobs.find(j => j.id === jobId);
+                if (job && job.status !== 'RUNNING') {
+                    const badge = row.querySelector('.status-badge');
+                    if (badge) {
+                        badge.textContent = job.status;
+                        badge.className = 'status-badge font-bold text-[10px] ' + 
+                            (job.status === 'DONE' ? 'text-green-600' : 
+                             job.status === 'FAILED' ? 'text-red-500' : 'text-gray-500');
+                    }
+                    row.dataset.status = job.status;
+                }
+            });
+        }
+        setInterval(refreshRunningJobs, 5000);
 
         // โหลด Dropdown ตอนเปิดหน้าเว็บครั้งแรก
         window.onload = updateGroupDropdown;

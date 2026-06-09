@@ -3,11 +3,26 @@ const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const { runCommentBot } = require('./lib/bot-engine');
-const { runLinePersonalBot ,syncLineGroups } = require('./lib/line-user-engine');
+const { runLinePersonalBot, syncLineGroups } = require('./lib/line-user-engine');
 const session = require('express-session');
 const { PrismaSessionStore } = require('@quixo3/prisma-session-store');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
+
+// --- Multer สำหรับ upload สลิป ---
+const slipStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = path.join(__dirname, 'public/uploads/slips');
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `slip-${Date.now()}${path.extname(file.originalname)}`);
+    }
+});
+const upload = multer({ storage: slipStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const app = express();
 const prisma = global.prisma || new PrismaClient();
@@ -53,7 +68,31 @@ app.post('/login', async (req, res) => {
     }
     res.render('login', { error: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง' });
 });
+app.get('/register', (req, res) => res.render('register'));
+app.post('/api/register', async (req, res) => {
+    const { username, email, password } = req.body;
+    try {
+        const exists = await prisma.user.findFirst({ where: { OR: [{ username }, { email }] } });
+        if (exists) return res.send(`<script>alert('ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้งานแล้ว'); window.location.href='/register';</script>`);
+        const hashed = await bcrypt.hash(password, 10);
+        await prisma.user.create({ data: { username, email, password: hashed } });
+        res.redirect('/login');
+    } catch (err) {
+        res.send(`<script>alert('เกิดข้อผิดพลาด: ${err.message}'); window.location.href='/register';</script>`);
+    }
+});
+
 app.get('/logout', (req, res) => { req.session.destroy(); res.redirect('/login'); });
+const isAdmin = async (req, res, next) => {
+    if (req.session && req.session.userId) {
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        if (user && (user.role === 'admin' || user.role === 'ADMIN')) {
+            req.session.user = user;
+            return next();
+        }
+    }
+    res.status(403).send('<script>alert("Access Denied"); window.location.href="/";</script>');
+};
 
 // --- Dashboard Routes ---
 app.get('/', isLogin, async (req, res) => {
@@ -217,6 +256,159 @@ app.get('/history', isLogin, async (req, res) => {
         orderBy: { createdAt: 'desc' } 
     });
     res.render('history', { user: req.session.user, payments, page: 'history' });
+});
+
+// ==========================================
+// TOPUP — อัปโหลดสลิปเพื่อแจ้งเติมเครดิต
+// ==========================================
+app.post('/api/topup', isLogin, upload.single('slip'), async (req, res) => {
+    try {
+        const { amount } = req.body;
+        if (!req.file) return res.send(`<script>alert('กรุณาแนบสลิป'); history.back();</script>`);
+        const slipUrl = `/uploads/slips/${req.file.filename}`;
+        await prisma.payment.create({
+            data: { amount: parseFloat(amount), slipUrl, userId: req.session.userId, status: 'PENDING' }
+        });
+        res.send(`<script>alert('แจ้งเติมเครดิตสำเร็จ! กรุณารอการอนุมัติจาก Admin'); window.location.href='/history';</script>`);
+    } catch (e) {
+        res.send(`<script>alert('เกิดข้อผิดพลาด: ${e.message}'); history.back();</script>`);
+    }
+});
+
+// ==========================================
+// PACKAGES — ซื้อแพ็คเกจหักเครดิต
+// ==========================================
+app.post('/api/packages/buy', isLogin, async (req, res) => {
+    const { planName, price } = req.body;
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        if (user.credits < price) return res.json({ success: false, error: 'เครดิตไม่เพียงพอ กรุณาเติมเครดิตก่อน' });
+        await prisma.user.update({
+            where: { id: req.session.userId },
+            data: { credits: { decrement: price }, packageStatus: 'PAID' }
+        });
+        res.json({ success: true, message: `ซื้อแพ็คเกจ ${planName} สำเร็จ` });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// ==========================================
+// ADMIN ROUTES
+// ==========================================
+app.get('/admin/payments', isAdmin, async (req, res) => {
+    const payments = await prisma.payment.findMany({
+        where: { status: 'PENDING' },
+        include: { user: true },
+        orderBy: { createdAt: 'asc' }
+    });
+    res.render('admin_payments', { user: req.session.user, payments, page: 'admin' });
+});
+
+app.post('/api/admin/payments/approve', isAdmin, async (req, res) => {
+    const { paymentId } = req.body;
+    try {
+        const payment = await prisma.payment.findUnique({ where: { id: parseInt(paymentId) } });
+        if (!payment) return res.status(404).json({ error: 'ไม่พบรายการ' });
+        await prisma.payment.update({ where: { id: payment.id }, data: { status: 'APPROVED' } });
+        await prisma.user.update({
+            where: { id: payment.userId },
+            data: { credits: { increment: payment.amount } }
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ==========================================
+// LOTTERY — ระบบรายงานผลหวย
+// ==========================================
+
+// ตัวแปร in-memory สำหรับเก็บประวัติผลหวย (per user session)
+const lotteryHistoryStore = {};
+
+app.get('/lottery', isLogin, (req, res) => {
+    const lineAccounts = [];
+    // ดึง line accounts ของ user
+    prisma.lineAccount.findMany({ where: { userId: req.session.userId } }).then(accs => {
+        const history = lotteryHistoryStore[req.session.userId] || [];
+        res.render('lottery', { 
+            user: req.session.user, 
+            lineAccounts: accs,
+            lotteryHistory: history.slice(0, 10),
+            page: 'lottery' 
+        });
+    });
+});
+
+app.post('/api/lottery/send', isLogin, async (req, res) => {
+    const { lineAccountId, round, prize1st, prize2front, prize2back,
+            prize3front1, prize3front2, prize3back, nearPrize1, nearPrize2, message } = req.body;
+    
+    try {
+        // ตรวจสอบบัญชี LINE เป็นของ user นี้
+        const account = await prisma.lineAccount.findUnique({ where: { id: parseInt(lineAccountId) } });
+        if (!account || account.userId !== req.session.userId) {
+            return res.status(403).json({ success: false, error: 'ไม่มีสิทธิ์ใช้บัญชีนี้' });
+        }
+
+        // ดึงกลุ่มทั้งหมดของบัญชีนี้
+        let groups = [];
+        if (account.fetchedGroups) {
+            try { groups = JSON.parse(account.fetchedGroups); } catch(e) {}
+        }
+        
+        if (groups.length === 0) {
+            return res.json({ success: false, error: 'ยังไม่มีกลุ่ม กรุณากด "ดึงกลุ่ม" ในหน้าบอทไลน์ก่อน' });
+        }
+
+        // สร้าง job สำหรับแต่ละกลุ่ม (ส่งทุกกลุ่มพร้อมกัน)
+        let sentCount = 0;
+        for (const group of groups) {
+            const groupId = typeof group === 'object' ? group.id : group;
+            try {
+                const job = await prisma.jobQueue.create({
+                    data: {
+                        targetUrl: groupId,
+                        message,
+                        platform: 'LINE',
+                        mode: 'IMMEDIATE',
+                        status: 'RUNNING',
+                        lineAccountId: account.id
+                    },
+                    include: { lineAccount: true }
+                });
+                // รันบอทส่งข้อความ
+                runLinePersonalBot(job).then(async (status) => {
+                    await prisma.jobQueue.update({ where: { id: job.id }, data: { status: status || 'SUCCESS' } });
+                }).catch(async () => {
+                    await prisma.jobQueue.update({ where: { id: job.id }, data: { status: 'FAILED' } });
+                });
+                sentCount++;
+            } catch(e) { console.error('Lottery send error:', e.message); }
+        }
+
+        // บันทึกประวัติ
+        if (!lotteryHistoryStore[req.session.userId]) lotteryHistoryStore[req.session.userId] = [];
+        lotteryHistoryStore[req.session.userId].unshift({
+            round, prize1st, prize2back, sentCount, sentAt: new Date()
+        });
+        // เก็บแค่ 20 รายการล่าสุด
+        if (lotteryHistoryStore[req.session.userId].length > 20) {
+            lotteryHistoryStore[req.session.userId].pop();
+        }
+
+        res.json({ success: true, sentCount, message: `ส่งผลหวยไปแล้ว ${sentCount} กลุ่ม` });
+    } catch (e) {
+        console.error('Lottery API error:', e);
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+app.delete('/api/lottery/history/clear', isLogin, (req, res) => {
+    lotteryHistoryStore[req.session.userId] = [];
+    res.json({ success: true });
 });
 
 app.listen(PORT, () => { console.log(`✅ Welloff Platform running on port ${PORT}`); });

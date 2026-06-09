@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>รายงานผลหวย - Welloff System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        input, textarea, select { font-size: 16px !important; }
+        .field-badge { @apply inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold; }
+    </style>
+</head>
+<body class="bg-gray-50 pb-16 font-sans antialiased text-gray-900">
+    <%- include('partials/navbar') %>
+
+    <div class="max-w-5xl mx-auto px-4 mt-6">
+
+        <!-- Header Banner -->
+        <div class="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-6 rounded-3xl shadow-md mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-extrabold flex items-center gap-2">
+                    <i class="fas fa-trophy"></i> ระบบรายงานผลหวย
+                </h1>
+                <p class="text-sm opacity-90 mt-1">กรอกผลหวยและกระจายไปยังทุกกลุ่ม LINE พร้อมกัน</p>
+            </div>
+            <% if(user.packageStatus === 'FREE') { %>
+                <a href="/topup" class="bg-white text-orange-600 px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap">อัปเกรด 150฿</a>
+            <% } %>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+            <!-- ซ้าย: ฟอร์มกรอกผล -->
+            <div class="lg:col-span-2 space-y-5">
+
+                <!-- เลือกบัญชี LINE -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-orange-600 mb-4 border-b pb-2 flex items-center gap-2">
+                        <i class="fab fa-line"></i> เลือกบัญชี LINE ที่จะส่ง
+                    </h2>
+                    <select id="lineAccountId" class="w-full border p-3 rounded-xl text-sm font-bold bg-orange-50 text-orange-800 outline-none">
+                        <option value="">-- เลือกบัญชี (ส่งทุกกลุ่มของบัญชีนี้) --</option>
+                        <% if(lineAccounts && lineAccounts.length > 0) { lineAccounts.forEach(acc => { %>
+                            <option value="<%= acc.id %>"><%= acc.groupName %></option>
+                        <% }) } %>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-2">* บอทจะส่งผลหวยไปยังทุกกลุ่มของบัญชีที่เลือก</p>
+                </div>
+
+                <!-- ข้อมูลงวด -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-orange-600 mb-4 border-b pb-2">
+                        <i class="fas fa-calendar-alt mr-1"></i> ข้อมูลงวด
+                    </h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">งวดที่ <span class="text-red-500">*</span></label>
+                            <input type="text" id="lotteryRound" placeholder="เช่น 1/7/2568" 
+                                class="w-full border p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-300">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ผลรางวัล -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-orange-600 mb-4 border-b pb-2">
+                        <i class="fas fa-star mr-1"></i> ผลรางวัล
+                    </h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">🥇 รางวัลที่ 1 (6 หลัก) <span class="text-red-500">*</span></label>
+                            <input type="text" id="prize1st" maxlength="6" placeholder="xxxxxx"
+                                class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-yellow-300 text-center tracking-widest text-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">🔢 เลขหน้า 2 ตัว</label>
+                                <input type="text" id="prize2front" maxlength="2" placeholder="xx"
+                                    class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-blue-300 text-center tracking-widest text-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">🔢 เลขท้าย 2 ตัว <span class="text-red-500">*</span></label>
+                                <input type="text" id="prize2back" maxlength="2" placeholder="xx"
+                                    class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-blue-300 text-center tracking-widest text-lg">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">3️⃣ เลขหน้า 3 ตัว (ชุด 1)</label>
+                                <input type="text" id="prize3front1" maxlength="3" placeholder="xxx"
+                                    class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-purple-300 text-center tracking-widest text-lg">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">3️⃣ เลขหน้า 3 ตัว (ชุด 2)</label>
+                                <input type="text" id="prize3front2" maxlength="3" placeholder="xxx"
+                                    class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-purple-300 text-center tracking-widest text-lg">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">3️⃣ เลขท้าย 3 ตัว</label>
+                            <input type="text" id="prize3back" maxlength="3" placeholder="xxx"
+                                class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-purple-300 text-center tracking-widest text-lg">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">🎖️ ใกล้เคียง (ตัวบน)</label>
+                                <input type="text" id="nearPrize1" maxlength="6" placeholder="xxxxxx"
+                                    class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-green-300 text-center tracking-widest">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">🎖️ ใกล้เคียง (ตัวล่าง)</label>
+                                <input type="text" id="nearPrize2" maxlength="6" placeholder="xxxxxx"
+                                    class="w-full border p-3 rounded-xl text-sm font-mono font-bold outline-none focus:ring-2 focus:ring-green-300 text-center tracking-widest">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ปุ่มดำเนินการ -->
+                <div class="space-y-3">
+                    <button onclick="previewResult()" class="w-full bg-gray-700 hover:bg-gray-900 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fas fa-eye"></i> ดูตัวอย่างข้อความ
+                    </button>
+                    <button onclick="sendLotteryResult()" id="sendBtn"
+                        class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-lg">
+                        <i class="fas fa-paper-plane"></i> ส่งผลหวยไปทุกกลุ่ม
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- ขวา: Preview + ประวัติ -->
+            <div class="lg:col-span-3 space-y-5">
+
+                <!-- Preview Card -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <h2 class="font-bold text-gray-700 mb-4 border-b pb-2 flex items-center gap-2">
+                        <i class="fas fa-mobile-alt text-orange-500"></i> ตัวอย่างข้อความที่จะส่ง
+                    </h2>
+                    <div id="previewBox" class="bg-slate-800 text-green-300 font-mono text-sm p-5 rounded-2xl min-h-[280px] whitespace-pre-wrap leading-relaxed">
+<span class="text-gray-500">← กรอกผลหวยแล้วกด "ดูตัวอย่าง" เพื่อดูข้อความที่จะส่ง</span>
+                    </div>
+                </div>
+
+                <!-- ประวัติการส่งผลหวย -->
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <h2 class="font-bold text-gray-700 flex items-center gap-2">
+                            <i class="fas fa-history text-orange-500"></i> ประวัติการส่งผลหวย
+                        </h2>
+                        <button onclick="clearLotteryHistory()" class="text-xs text-red-500 font-bold hover:underline">ล้างประวัติ</button>
+                    </div>
+                    <div id="lotteryHistory" class="space-y-3">
+                        <% if(typeof lotteryHistory !== 'undefined' && lotteryHistory.length > 0) { %>
+                            <% lotteryHistory.forEach(h => { %>
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <div>
+                                    <p class="font-bold text-sm text-gray-800">งวด <%= h.round %></p>
+                                    <p class="text-xs text-gray-500">รางวัลที่ 1: <span class="font-mono font-bold text-yellow-600"><%= h.prize1st %></span></p>
+                                    <p class="text-[10px] text-gray-400 mt-1"><%= new Date(h.sentAt).toLocaleString('th-TH') %></p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-lg block mb-1">ส่งแล้ว <%= h.sentCount %> กลุ่ม</span>
+                                </div>
+                            </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="text-center py-8 text-gray-400">
+                                <i class="fas fa-inbox text-4xl opacity-20 block mb-3"></i>
+                                <p class="text-sm">ยังไม่มีประวัติการส่งผลหวย</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Loading -->
+    <div id="loadingModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                <i class="fas fa-paper-plane fa-bounce"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">กำลังส่งผลหวย...</h3>
+            <p class="text-gray-500 text-sm" id="loadingText">กำลังกระจายข้อความไปยังทุกกลุ่ม LINE</p>
+            <div class="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-pulse w-3/4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Result -->
+    <div id="resultModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl">
+            <div id="resultIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl"></div>
+            <h3 id="resultTitle" class="text-xl font-bold text-gray-800 mb-2"></h3>
+            <p id="resultText" class="text-gray-500 text-sm mb-6"></p>
+            <button onclick="closeResultModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition">ตกลง</button>
+        </div>
+    </div>
+
+    <script>
+        function buildMessage() {
+            const round   = document.getElementById('lotteryRound').value.trim();
+            const p1      = document.getElementById('prize1st').value.trim();
+            const p2f     = document.getElementById('prize2front').value.trim();
+            const p2b     = document.getElementById('prize2back').value.trim();
+            const p3f1    = document.getElementById('prize3front1').value.trim();
+            const p3f2    = document.getElementById('prize3front2').value.trim();
+            const p3b     = document.getElementById('prize3back').value.trim();
+            const near1   = document.getElementById('nearPrize1').value.trim();
+            const near2   = document.getElementById('nearPrize2').value.trim();
+
+            const now = new Date().toLocaleString('th-TH', { timeZone: 'Asia/Bangkok' });
+
+            let msg = `🎯 ผลหวยรัฐบาลไทย\n`;
+            msg += `📅 งวดที่ ${round || '(ยังไม่ระบุ)'}\n`;
+            msg += `🕐 ${now}\n`;
+            msg += `━━━━━━━━━━━━━━━━\n`;
+            if (p1)    msg += `🥇 รางวัลที่ 1    : ${p1}\n`;
+            if (near1) msg += `🎖️ ใกล้เคียง      : ${near1} / ${near2}\n`;
+            if (p2f)   msg += `🔢 เลขหน้า 2 ตัว  : ${p2f}\n`;
+            if (p2b)   msg += `🔢 เลขท้าย 2 ตัว  : ${p2b}\n`;
+            if (p3f1 || p3f2) msg += `3️⃣ เลขหน้า 3 ตัว  : ${p3f1}${p3f2 ? ' / ' + p3f2 : ''}\n`;
+            if (p3b)   msg += `3️⃣ เลขท้าย 3 ตัว  : ${p3b}\n`;
+            msg += `━━━━━━━━━━━━━━━━\n`;
+            msg += `✅ ส่งโดยระบบ Welloff อัตโนมัติ`;
+            return msg;
+        }
+
+        function previewResult() {
+            const msg = buildMessage();
+            document.getElementById('previewBox').innerText = msg;
+        }
+
+        async function sendLotteryResult() {
+            const accountId = document.getElementById('lineAccountId').value;
+            const round = document.getElementById('lotteryRound').value.trim();
+            const prize1st = document.getElementById('prize1st').value.trim();
+            const prize2back = document.getElementById('prize2back').value.trim();
+
+            if (!accountId) return showResult(false, 'กรุณาเลือกบัญชี LINE', 'ต้องเลือกบัญชี LINE ก่อนส่งผลหวย');
+            if (!round) return showResult(false, 'กรุณาระบุงวด', 'ต้องระบุงวดหวยก่อน เช่น 1/7/2568');
+            if (!prize1st) return showResult(false, 'กรุณากรอกรางวัลที่ 1', 'รางวัลที่ 1 เป็นข้อมูลบังคับ');
+            if (!prize2back) return showResult(false, 'กรุณากรอกเลขท้าย 2 ตัว', 'เลขท้าย 2 ตัวเป็นข้อมูลบังคับ');
+
+            const message = buildMessage();
+
+            document.getElementById('loadingModal').classList.remove('hidden');
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const res = await fetch('/api/lottery/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lineAccountId: accountId,
+                        round, prize1st,
+                        prize2front: document.getElementById('prize2front').value.trim(),
+                        prize2back,
+                        prize3front1: document.getElementById('prize3front1').value.trim(),
+                        prize3front2: document.getElementById('prize3front2').value.trim(),
+                        prize3back: document.getElementById('prize3back').value.trim(),
+                        nearPrize1: document.getElementById('nearPrize1').value.trim(),
+                        nearPrize2: document.getElementById('nearPrize2').value.trim(),
+                        message
+                    })
+                });
+                const data = await res.json();
+                document.getElementById('loadingModal').classList.add('hidden');
+
+                if (data.success) {
+                    showResult(true, '✅ ส่งสำเร็จ!', `กระจายผลหวยไปแล้ว <b class="text-orange-600">${data.sentCount} กลุ่ม</b> เรียบร้อย`);
+                    setTimeout(() => location.reload(), 2500);
+                } else {
+                    showResult(false, 'เกิดข้อผิดพลาด', data.error || 'ไม่สามารถส่งได้ กรุณาลองใหม่');
+                }
+            } catch(e) {
+                document.getElementById('loadingModal').classList.add('hidden');
+                showResult(false, 'ไม่สามารถเชื่อมต่อได้', 'กรุณาตรวจสอบการเชื่อมต่อ');
+            } finally {
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        function showResult(ok, title, text) {
+            const icon = document.getElementById('resultIcon');
+            icon.className = `w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl ${ok ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`;
+            icon.innerHTML = ok ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>';
+            document.getElementById('resultTitle').innerText = title;
+            document.getElementById('resultText').innerHTML = text;
+            document.getElementById('resultModal').classList.remove('hidden');
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.add('hidden');
+        }
+
+        async function clearLotteryHistory() {
+            if (!confirm('ล้างประวัติการส่งผลหวยทั้งหมด?')) return;
+            await fetch('/api/lottery/history/clear', { method: 'DELETE' });
+            location.reload();
+        }
+
+        // Auto-preview เมื่อมีการกรอกข้อมูล
+        ['lotteryRound','prize1st','prize2front','prize2back','prize3front1','prize3front2','prize3back','nearPrize1','nearPrize2'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', () => {
+                if (document.getElementById('prize1st').value) previewResult();
+            });
+        });
+    </script>
+</body>
+</html>

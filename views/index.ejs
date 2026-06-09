@@ -32,8 +32,25 @@
                     </form>
                 </div>
 
+                <!-- รายการบัญชี Facebook -->
                 <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
-                    <h2 class="font-bold text-blue-600 mb-4 border-b pb-2">สั่งงานบอท</h2>
+                    <h2 class="font-bold text-blue-600 mb-4 border-b pb-2">บัญชีที่เชื่อมต่อไว้</h2>
+                    <div class="space-y-2">
+                        <% if(accounts && accounts.length > 0) { accounts.forEach(acc => { %>
+                            <div class="flex justify-between items-center bg-gray-50 border border-gray-100 p-3 rounded-xl">
+                                <div>
+                                    <p class="font-bold text-sm text-gray-800"><%= acc.fbEmail %></p>
+                                    <p class="text-[10px] text-gray-400">ID: <%= acc.id %></p>
+                                </div>
+                                <button onclick="deleteFbAccount(<%= acc.id %>)" class="text-red-500 text-xs font-bold px-2 hover:text-red-700">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        <% }) } else { %>
+                            <p class="text-sm text-gray-400 text-center py-2">ยังไม่มีบัญชี</p>
+                        <% } %>
+                    </div>
+                </div>
                     <form id="fbJobForm" class="space-y-4">
                         <input type="hidden" id="platform" value="FACEBOOK">
                         
@@ -72,11 +89,15 @@
                         <thead class="bg-gray-50"><tr><th class="p-3">โหมด</th><th class="p-3">ข้อความ</th><th class="p-3">เวลาส่ง</th><th class="p-3">สถานะ</th></tr></thead>
                         <tbody>
                             <% jobs.forEach(job => { %>
-                                <tr class="border-b">
+                                <tr class="border-b" data-job-id="<%= job.id %>" data-status="<%= job.status %>">
                                     <td class="p-3 font-bold text-blue-600"><%= job.mode %></td>
                                     <td class="p-3 truncate max-w-[150px]"><%= job.message %></td>
                                     <td class="p-3 text-xs"><%= new Date(job.runAt).toLocaleString('th-TH') %></td>
-                                    <td class="p-3 font-bold"><%= job.status %></td>
+                                    <td class="p-3">
+                                        <span class="status-badge font-bold <%= job.status === 'DONE' ? 'text-green-600' : job.status === 'FAILED' ? 'text-red-500' : job.status === 'RUNNING' ? 'text-blue-500' : 'text-gray-500' %>">
+                                            <%= job.status %>
+                                        </span>
+                                    </td>
                                 </tr>
                             <% }) %>
                         </tbody>
@@ -118,6 +139,40 @@
                 location.reload();
             }
         }
+
+        async function deleteFbAccount(id) {
+            if(confirm('ยืนยันลบบัญชี Facebook นี้? ประวัติงานของบัญชีนี้จะถูกลบด้วย')) {
+                const res = await fetch(`/api/facebook/delete/${id}`, { method: 'DELETE' });
+                if(res.ok) location.reload();
+                else alert('ลบไม่สำเร็จ');
+            }
+        }
+
+        // Auto-refresh สถานะงานที่กำลัง RUNNING ทุก 5 วินาที
+        async function refreshRunningJobs() {
+            const runningRows = document.querySelectorAll('[data-job-id][data-status="RUNNING"]');
+            if (runningRows.length === 0) return;
+            
+            const res = await fetch('/api/jobs/status');
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            runningRows.forEach(row => {
+                const jobId = parseInt(row.dataset.jobId);
+                const job = data.jobs.find(j => j.id === jobId);
+                if (job && job.status !== 'RUNNING') {
+                    const badge = row.querySelector('.status-badge');
+                    if (badge) {
+                        badge.textContent = job.status;
+                        badge.className = 'status-badge font-bold ' + 
+                            (job.status === 'DONE' ? 'text-green-600' : 
+                             job.status === 'FAILED' ? 'text-red-500' : 'text-gray-500');
+                    }
+                    row.dataset.status = job.status;
+                }
+            });
+        }
+        setInterval(refreshRunningJobs, 5000);
     </script>
 </body>
 </html>
