@@ -60,6 +60,7 @@ const isLogin = async (req, res, next) => {
 // --- Auth Routes ---
 app.get('/login', (req, res) => res.render('login', { error: null }));
 app.post('/login', async (req, res) => {
+    if (!req.body) return res.render('login', { error: 'เกิดข้อผิดพลาด' });
     const { username, password } = req.body;
     const user = await prisma.user.findUnique({ where: { username } });
     if (user && await bcrypt.compare(password, user.password)) {
